@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Aussie Boyz World Cup",
+    "slug": "aussie-boyz-world-cup-app",
+    "version": "1.0.0",
+    "description": "Live scores, fixtures and group standings for the 2026 FIFA World Cup.",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "aussieboyzwc",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1FA05A"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "es.robjam.aussieboyzwc"
+    },
+    "android": {
+      "package": "es.robjam.aussieboyzwc",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1FA05A"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "baseUrl": "/aussie-boyz-world-cup-app"
+    }
+  }
+}
