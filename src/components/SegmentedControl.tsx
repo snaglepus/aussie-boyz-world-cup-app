@@ -23,13 +23,20 @@ export function SegmentedControl<T extends string>({
             onPress={() => onChange(opt.value)}
             style={[
               styles.segment,
-              active && { backgroundColor: theme.colors.surface, shadowOpacity: theme.dark ? 0 : 0.08 },
+              active && {
+                backgroundColor: theme.colors.accent,
+                shadowColor: theme.colors.accent,
+                shadowOpacity: theme.dark ? 0 : 0.25,
+              },
             ]}
           >
             <Text
               style={[
                 styles.label,
-                { color: active ? theme.colors.text : theme.colors.textSecondary, fontWeight: active ? '700' : '600' },
+                {
+                  color: active ? theme.colors.onAccent : theme.colors.textSecondary,
+                  fontWeight: active ? '800' : '600',
+                },
               ]}
             >
               {opt.label}

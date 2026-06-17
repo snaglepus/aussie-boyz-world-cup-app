@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card } from '../../src/components/Card';
 import { EmptyState } from '../../src/components/EmptyState';
@@ -19,8 +19,17 @@ export default function LiveScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { data, isFetching, refetch } = useWorldCup();
+  const { data, isLoading, isFetching, refetch } = useWorldCup();
   const live = data ? liveMatches(data) : [];
+  // Until the first load resolves we don't yet know if anything is live, so show
+  // a "checking" state rather than prematurely claiming there's no match.
+  const loading = isLoading || !data;
+
+  const subtitle = loading
+    ? 'Checking for live matches…'
+    : live.length
+      ? `${live.length} match${live.length > 1 ? 'es' : ''} in progress`
+      : 'Match centre';
 
   return (
     <ScrollView
@@ -30,10 +39,19 @@ export default function LiveScreen() {
         <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={theme.colors.accent} />
       }
     >
-      <ScreenHeader title="Live" subtitle={live.length ? `${live.length} match${live.length > 1 ? 'es' : ''} in progress` : 'Match centre'} />
+      <ScreenHeader title="Live" subtitle={subtitle} />
 
       <View style={styles.body}>
-        {live.length === 0 ? (
+        {loading ? (
+          <Card>
+            <View style={styles.loadingBox}>
+              <ActivityIndicator color={theme.colors.accent} />
+              <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
+                Fetching the latest scores…
+              </Text>
+            </View>
+          </Card>
+        ) : live.length === 0 ? (
           <Card>
             <EmptyState
               icon="radio-outline"
@@ -91,5 +109,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 11, fontWeight: '800', letterSpacing: 0.8, marginBottom: 12 },
   cta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 13, borderRadius: 12, marginTop: 4 },
   ctaText: { fontSize: 15, fontWeight: '700' },
+  loadingBox: { alignItems: 'center', justifyContent: 'center', gap: 12, paddingVertical: 28 },
+  loadingText: { fontSize: 14, fontWeight: '600' },
   tapHint: { fontSize: 12, fontWeight: '600', textAlign: 'center', marginTop: 14 },
 });
