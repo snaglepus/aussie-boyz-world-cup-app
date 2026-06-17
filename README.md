@@ -27,30 +27,26 @@ fallback**":
 
 | Source | Role | Key needed |
 | --- | --- | --- |
-| [BALLDONTLIE FIFA API](https://www.balldontlie.io) | Primary **live** data (in-match scores, cards, stats) | Yes (free tier) |
+| [ESPN scoreboard](https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard) | Real-time **live** data (in-match scores, clock, goals, cards) | No |
 | [openfootball/worldcup.json](https://github.com/openfootball/worldcup.json) | Full schedule, scorers & results | No |
 | Bundled snapshot | Offline / first-launch fallback | No |
 
 Resolution order lives in `src/data/service.ts`:
 
 1. openfootball provides the full 104-match schedule and goal scorers.
-2. If a BALLDONTLIE key is set, its real-time games are overlaid on top
-   (authoritative live status, scores, cards, stats) and its standings are used.
-3. Standings are otherwise **computed locally** from results, so the table
-   updates the instant a result lands.
+2. ESPN's free, keyless scoreboard is overlaid on top of the matching fixtures
+   (authoritative live status, score, clock and goal/card events).
+3. Standings are **computed locally** from results, so the table updates the
+   instant a result lands.
 4. If the network is unavailable, a bundled snapshot keeps the app usable.
 
-Because there is no backend, an API key (if provided) ships inside the client
-bundle — an accepted trade-off for a free-tier hobby key. The app is fully
-functional **without** a key.
+Every source is keyless and CORS-friendly, so the serverless static build works
+with **no API keys and no secrets** — nothing to configure.
 
 ## Getting started
 
 ```bash
 npm install            # or: pnpm install / yarn
-
-# Optional — turn on real-time live data:
-cp .env.example .env   # then add your EXPO_PUBLIC_BALLDONTLIE_KEY
 
 npm start              # then press "i" for the iOS simulator,
                        # or scan the QR code with Expo Go on your iPhone

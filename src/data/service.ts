@@ -1,16 +1,16 @@
 import { computeGroupTables } from '../utils/standings';
-import { fetchLiveGames, fetchLiveStandings, hasLiveSource } from './balldontlie';
+import { fetchEspnLive } from './espn';
 import { fetchOpenFootball, normaliseMatches } from './openfootball';
 import { SAMPLE_RAW_MATCHES } from './sampleData';
-import { GroupTable, Match, WorldCupData } from './types';
+import { Match, WorldCupData } from './types';
 
 /**
  * Single entry point the UI consumes. Resolution strategy:
  *   1. openfootball provides the full schedule + scorers (the backbone).
- *   2. If a BALLDONTLIE key is present, overlay its real-time games (authoritative
- *      live status, scores, cards, stats) onto the matching fixtures.
- *   3. Standings come from BALLDONTLIE when available, else are computed locally.
- *   4. If everything network-bound fails, fall back to the bundled snapshot.
+ *   2. ESPN's free, keyless scoreboard overlays real-time status, scores and
+ *      goal/card events onto the matching fixtures (no API key required).
+ *   3. Standings are computed on-device from results.
+ *   4. If openfootball fails, fall back to the bundled snapshot.
  */
 export async function loadWorldCup(now: Date = new Date()): Promise<WorldCupData> {
   let base: Match[] = [];
@@ -23,21 +23,16 @@ export async function loadWorldCup(now: Date = new Date()): Promise<WorldCupData
     source = 'bundled';
   }
 
-  let standings: GroupTable[] | null = null;
-
-  if (hasLiveSource()) {
-    const [liveGames, liveStandings] = await Promise.all([
-      fetchLiveGames().catch(() => null),
-      fetchLiveStandings().catch(() => null),
-    ]);
-    if (liveGames && liveGames.length) {
-      base = overlayLive(base, liveGames);
-      source = 'live';
+  const live = await fetchEspnLive().catch(() => null);
+  if (live && live.length) {
+    const overlaid = overlayLive(base, live);
+    if (overlaid.some((m) => m.source === 'live')) {
+      base = overlaid;
+      if (source !== 'bundled') source = 'live';
     }
-    if (liveStandings && liveStandings.length) standings = liveStandings;
   }
 
-  if (!standings) standings = computeGroupTables(base);
+  const standings = computeGroupTables(base);
 
   return {
     matches: sortByKickoff(base),
