@@ -8,6 +8,9 @@ import { type PropsWithChildren } from 'react';
  */
 const TITLE = 'Aussie Boyz World Cup';
 const DESCRIPTION = 'Live scores, fixtures and group standings for the 2026 FIFA World Cup.';
+// Must match app.json → experiments.baseUrl (the GitHub Pages subpath). Files in
+// public/ are copied to the export root and served under this prefix.
+const BASE = '/aussie-boyz-world-cup-app';
 
 export default function Root({ children }: PropsWithChildren) {
   return (
@@ -23,8 +26,14 @@ export default function Root({ children }: PropsWithChildren) {
         <title>{TITLE}</title>
         <meta name="description" content={DESCRIPTION} />
         <meta name="theme-color" content="#1FA05A" />
+
+        {/* Home-screen install: real app icon + standalone (no browser chrome). */}
+        <link rel="manifest" href={`${BASE}/manifest.json`} />
+        <link rel="apple-touch-icon" href={`${BASE}/apple-touch-icon.png`} />
+        <link rel="icon" type="image/png" sizes="192x192" href={`${BASE}/icons/icon-192.png`} />
         <meta name="apple-mobile-web-app-title" content="Aussie Boyz WC" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="mobile-web-app-capable" content="yes" />
 
         <meta property="og:type" content="website" />
