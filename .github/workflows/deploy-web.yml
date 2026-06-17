@@ -33,6 +33,12 @@ jobs:
         run: npm ci
 
       - name: Export web build
+        # EXPO_PUBLIC_* vars are inlined into the client bundle at export time.
+        # Supplying the BALLDONTLIE key switches the app from the keyless
+        # openfootball fallback to the real-time FIFA feed (live scores/clock).
+        # Add the key under repo Settings → Secrets and variables → Actions.
+        env:
+          EXPO_PUBLIC_BALLDONTLIE_KEY: ${{ secrets.EXPO_PUBLIC_BALLDONTLIE_KEY }}
         run: npx expo export --platform web
 
       - name: SPA fallback + disable Jekyll
