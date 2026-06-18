@@ -5,6 +5,7 @@ import { EmptyState } from '../../src/components/EmptyState';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { SkeletonBlock } from '../../src/components/Skeleton';
 import { StandingsTable } from '../../src/components/StandingsTable';
+import { TitleFavourites } from '../../src/components/TitleFavourites';
 import { GroupTable } from '../../src/data/types';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
@@ -29,6 +30,7 @@ export default function TableScreen() {
           <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={theme.colors.accent} />
         }
       >
+        <TitleFavourites />
         <Legend confidence={thirds.overall} />
         {isLoading ? (
           [0, 1, 2].map((i) => <SkeletonBlock key={i} style={{ height: 220, borderRadius: 16, marginBottom: 22 }} />)
