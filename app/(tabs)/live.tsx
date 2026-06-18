@@ -49,15 +49,6 @@ export default function LiveScreen() {
     >
       <ScreenHeader title="Live" subtitle={subtitle} />
 
-      {isFetching && !loading ? (
-        <View style={styles.refreshRow}>
-          <ActivityIndicator size="small" color={theme.colors.accent} />
-          <Text style={[styles.refreshText, { color: theme.colors.textSecondary }]}>
-            Refreshing data now…
-          </Text>
-        </View>
-      ) : null}
-
       <View style={styles.body}>
         {loading ? (
           <Card>
@@ -86,6 +77,15 @@ export default function LiveScreen() {
         ) : (
           live.map((m) => <LiveCard key={m.id} match={m} />)
         )}
+
+        {isFetching && !loading ? (
+          <View style={styles.refreshRow}>
+            <ActivityIndicator size="small" color={theme.colors.accent} />
+            <Text style={[styles.refreshText, { color: theme.colors.textSecondary }]}>
+              Refreshing data now…
+            </Text>
+          </View>
+        ) : null}
       </View>
     </ScrollView>
   );
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   ctaText: { fontSize: 15, fontWeight: '700' },
   loadingBox: { alignItems: 'center', justifyContent: 'center', gap: 12, paddingVertical: 28 },
   loadingText: { fontSize: 14, fontWeight: '600' },
-  refreshRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingBottom: 10 },
+  refreshRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 16 },
   refreshText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.2 },
   tapHint: { fontSize: 12, fontWeight: '600', textAlign: 'center', marginTop: 14 },
 });
