@@ -7,6 +7,10 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    # Refresh the shared odds snapshot. Every 2h ≈ 360 API calls/month, within
+    # The Odds API free tier (~500/mo) with headroom for push-triggered builds.
+    - cron: '0 */2 * * *'
 
 permissions:
   contents: read
@@ -33,13 +37,16 @@ jobs:
         run: npm ci
 
       - name: Export web build
-        # EXPO_PUBLIC_* vars are inlined into the client bundle at export time.
-        # ODDS_API_KEY enables the "Title favourites" odds strip (The Odds API).
-        # Add keys under repo Settings → Secrets and variables → Actions.
         env:
           EXPO_PUBLIC_BALLDONTLIE_KEY: ${{ secrets.EXPO_PUBLIC_BALLDONTLIE_KEY }}
-          EXPO_PUBLIC_ODDS_API_KEY: ${{ secrets.EXPO_PUBLIC_ODDS_API_KEY }}
         run: npx expo export --platform web
+
+      - name: Fetch odds snapshot
+        # Writes dist/odds.json once per build so all visitors share one cached
+        # copy; the key stays here in CI and never reaches the client bundle.
+        env:
+          EXPO_PUBLIC_ODDS_API_KEY: ${{ secrets.EXPO_PUBLIC_ODDS_API_KEY }}
+        run: node scripts/fetch-odds.mjs
 
       - name: SPA fallback + disable Jekyll
         # GitHub Pages 404s unknown paths; serving index.html as 404.html lets

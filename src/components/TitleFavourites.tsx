@@ -1,6 +1,6 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { hasOddsSource, TitleOdd } from '../data/odds';
+import { TitleOdd } from '../data/odds';
 import { useTitleOdds } from '../hooks/useTitleOdds';
 import { useTheme } from '../theme/ThemeProvider';
 import { tabularNums } from '../theme/theme';
@@ -15,7 +15,6 @@ export function TitleFavourites() {
   const theme = useTheme();
   const { data, isLoading } = useTitleOdds();
 
-  if (!hasOddsSource()) return null;
   if (!isLoading && (!data || data.length === 0)) return null;
 
   const top: TitleOdd[] = (data ?? []).slice(0, 10);
@@ -42,7 +41,10 @@ export function TitleFavourites() {
               <Text numberOfLines={1} style={[styles.team, { color: theme.colors.text }]}>
                 {o.team.name}
               </Text>
-              <Text style={[styles.pct, tabularNums, { color: theme.colors.accent }]}>
+              <Text style={[styles.odds, tabularNums, { color: theme.colors.accent }]}>
+                ${o.decimal.toFixed(2)}
+              </Text>
+              <Text style={[styles.pct, tabularNums, { color: theme.colors.textSecondary }]}>
                 {o.impliedPct.toFixed(1)}%
               </Text>
             </View>
@@ -51,7 +53,7 @@ export function TitleFavourites() {
       )}
 
       <Text style={[styles.caption, { color: theme.colors.textMuted }]}>
-        Implied chance to win · odds via The Odds API
+        Decimal odds · win chance · via The Odds API
       </Text>
     </View>
   );
@@ -73,6 +75,7 @@ const styles = StyleSheet.create({
   },
   rank: { fontSize: 11, fontWeight: '700' },
   team: { fontSize: 12, fontWeight: '700', textAlign: 'center', alignSelf: 'stretch' },
-  pct: { fontSize: 15, fontWeight: '900' },
+  odds: { fontSize: 16, fontWeight: '900' },
+  pct: { fontSize: 11, fontWeight: '700' },
   caption: { fontSize: 11, fontWeight: '600', marginTop: 10, marginLeft: 2 },
 });
