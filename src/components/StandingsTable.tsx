@@ -3,13 +3,14 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { GroupTable, Standing } from '../data/types';
 import { useTheme } from '../theme/ThemeProvider';
 import { tabularNums } from '../theme/theme';
+import { teamKey } from '../utils/standings';
 import { Flag } from './Flag';
 import { FormPills } from './FormPills';
 
 const COL = { pos: 26, team: 150, stat: 30, pts: 38, gd: 36, form: 112 };
 
 /** A single group's standings, mirroring the reference screenshot layout. */
-export function StandingsTable({ table }: { table: GroupTable }) {
+export function StandingsTable({ table, bestThirds }: { table: GroupTable; bestThirds: Set<string> }) {
   const theme = useTheme();
 
   return (
@@ -20,7 +21,13 @@ export function StandingsTable({ table }: { table: GroupTable }) {
           <View>
             <Header />
             {table.rows.map((row, i) => (
-              <Row key={row.team.code + row.team.name} row={row} position={i + 1} last={i === table.rows.length - 1} />
+              <Row
+                key={teamKey(row.team)}
+                row={row}
+                position={i + 1}
+                last={i === table.rows.length - 1}
+                isBestThird={bestThirds.has(teamKey(row.team))}
+              />
             ))}
           </View>
         </ScrollView>
@@ -60,13 +67,24 @@ function Header() {
   );
 }
 
-function Row({ row, position, last }: { row: Standing; position: number; last: boolean }) {
+function Row({
+  row,
+  position,
+  last,
+  isBestThird,
+}: {
+  row: Standing;
+  position: number;
+  last: boolean;
+  isBestThird: boolean;
+}) {
   const theme = useTheme();
-  // Top 2 advance; 3rd may qualify as a best-third-placed team.
+  // Top 2 advance; only a 3rd that ranks among the best 8 takes a wildcard spot.
+  const bestThird = position === 3 && isBestThird;
   const band =
-    position <= 2 ? theme.colors.qualify : position === 3 ? theme.colors.playoff : 'transparent';
+    position <= 2 ? theme.colors.qualify : bestThird ? theme.colors.playoff : 'transparent';
   const accent =
-    position <= 2 ? theme.colors.accent : position === 3 ? theme.colors.gold : 'transparent';
+    position <= 2 ? theme.colors.accent : bestThird ? theme.colors.gold : 'transparent';
 
   const stat = (value: number, width: number, bold = false, signed = false) => (
     <Text

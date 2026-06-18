@@ -57,3 +57,25 @@ export function computeGroupTables(matches: Match[]): GroupTable[] {
   result.sort((a, b) => a.group.localeCompare(b.group));
   return result;
 }
+
+/** Stable key identifying a team within the computed tables. */
+export function teamKey(t: TeamRef): string {
+  return t.code + t.name;
+}
+
+/**
+ * Ranks the third-placed team from every group and returns the keys of the best
+ * `count` (default 8) — the ones that would currently claim a Round-of-32
+ * wildcard. Uses the FIFA tiebreakers we can derive from results: points, then
+ * goal difference, then goals for (team conduct and world ranking aren't in the
+ * feed). A final name sort keeps the cut deterministic when teams are level.
+ */
+export function bestThirdPlacedKeys(groups: GroupTable[], count = 8): Set<string> {
+  const thirds = groups
+    .map((g) => g.rows[2])
+    .filter((r): r is Standing => !!r)
+    .sort(
+      (a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.team.name.localeCompare(b.team.name)
+    );
+  return new Set(thirds.slice(0, count).map((s) => teamKey(s.team)));
+}
