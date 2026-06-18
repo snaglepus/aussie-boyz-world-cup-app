@@ -7,10 +7,18 @@ import { teamKey } from '../utils/standings';
 import { Flag } from './Flag';
 import { FormPills } from './FormPills';
 
-const COL = { pos: 26, team: 150, stat: 30, pts: 38, gd: 36, form: 112 };
+const COL = { pos: 26, team: 174, stat: 30, pts: 38, gd: 36, form: 112 };
 
 /** A single group's standings, mirroring the reference screenshot layout. */
-export function StandingsTable({ table, bestThirds }: { table: GroupTable; bestThirds: Set<string> }) {
+export function StandingsTable({
+  table,
+  bestThirds,
+  confidence,
+}: {
+  table: GroupTable;
+  bestThirds: Set<string>;
+  confidence: Map<string, number>;
+}) {
   const theme = useTheme();
 
   return (
@@ -27,6 +35,7 @@ export function StandingsTable({ table, bestThirds }: { table: GroupTable; bestT
                 position={i + 1}
                 last={i === table.rows.length - 1}
                 isBestThird={bestThirds.has(teamKey(row.team))}
+                confidence={confidence.get(teamKey(row.team))}
               />
             ))}
           </View>
@@ -72,11 +81,13 @@ function Row({
   position,
   last,
   isBestThird,
+  confidence,
 }: {
   row: Standing;
   position: number;
   last: boolean;
   isBestThird: boolean;
+  confidence?: number;
 }) {
   const theme = useTheme();
   // Top 2 advance; only a 3rd that ranks among the best 8 takes a wildcard spot.
@@ -114,6 +125,18 @@ function Row({
         <Text numberOfLines={1} style={[styles.teamName, { color: theme.colors.text }]}>
           {row.team.name}
         </Text>
+        {confidence != null ? (
+          <View
+            style={[
+              styles.confPill,
+              { backgroundColor: bestThird ? theme.colors.gold : theme.colors.surfaceAlt },
+            ]}
+          >
+            <Text style={[styles.confText, { color: bestThird ? '#11151C' : theme.colors.textMuted }]}>
+              {confidence}%
+            </Text>
+          </View>
+        ) : null}
       </View>
       {stat(row.mp, COL.stat)}
       {stat(row.w, COL.stat)}
@@ -143,5 +166,7 @@ const styles = StyleSheet.create({
   pos: { fontSize: 13, fontWeight: '700', width: 14 },
   teamCell: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 2 },
   teamName: { fontSize: 14, fontWeight: '600', flexShrink: 1 },
+  confPill: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 },
+  confText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.2 },
   formCell: { alignItems: 'center', justifyContent: 'center', paddingLeft: 8 },
 });

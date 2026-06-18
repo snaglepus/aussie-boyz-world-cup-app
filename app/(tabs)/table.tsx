@@ -5,10 +5,10 @@ import { EmptyState } from '../../src/components/EmptyState';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { SkeletonBlock } from '../../src/components/Skeleton';
 import { StandingsTable } from '../../src/components/StandingsTable';
-import { GroupTable, Match } from '../../src/data/types';
+import { GroupTable } from '../../src/data/types';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
-import { bestThirdPlacedKeys } from '../../src/utils/standings';
+import { assessThirdPlaced } from '../../src/utils/standings';
 
 export default function TableScreen() {
   const theme = useTheme();
@@ -16,18 +16,9 @@ export default function TableScreen() {
   const { data, isLoading, isFetching, refetch } = useWorldCup();
   const groups = data?.groups ?? [];
 
-  // Only the best 8 of the 12 third-placed teams take a Round-of-32 wildcard.
-  const bestThirds = useMemo(() => bestThirdPlacedKeys(groups), [groups]);
-
-  // Confidence in the best-third call grows as the group stage is played out:
-  // it's the share of group matches completed (100% once the groups are done).
-  const confidence = useMemo(() => {
-    const gms = (data?.matches ?? []).filter(
-      (m: Match) => m.group && !m.home.isPlaceholder && !m.away.isPlaceholder
-    );
-    if (!gms.length) return 0;
-    return Math.round((gms.filter((m: Match) => m.status === 'finished').length / gms.length) * 100);
-  }, [data]);
+  // Best 8 of the 12 third-placed teams take a Round-of-32 wildcard; each gets a
+  // heuristic confidence, and the legend shows the mean confidence of those 8.
+  const thirds = useMemo(() => assessThirdPlaced(groups), [groups]);
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.bg, paddingTop: insets.top }}>
@@ -38,14 +29,19 @@ export default function TableScreen() {
           <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={theme.colors.accent} />
         }
       >
-        <Legend confidence={confidence} />
+        <Legend confidence={thirds.overall} />
         {isLoading ? (
           [0, 1, 2].map((i) => <SkeletonBlock key={i} style={{ height: 220, borderRadius: 16, marginBottom: 22 }} />)
         ) : groups.length === 0 ? (
           <EmptyState icon="list-outline" title="Standings not available" message="Group tables will appear once the data loads." />
         ) : (
           groups.map((g: GroupTable) => (
-            <StandingsTable key={g.group} table={g} bestThirds={bestThirds} />
+            <StandingsTable
+              key={g.group}
+              table={g}
+              bestThirds={thirds.qualifiers}
+              confidence={thirds.confidence}
+            />
           ))
         )}
       </ScrollView>

@@ -63,19 +63,65 @@ export function teamKey(t: TeamRef): string {
   return t.code + t.name;
 }
 
+const GROUP_GAMES = 3; // matches each team plays in the group stage
+
+export type ThirdPlaceAssessment = {
+  /** Keys of the best `slots` third-placed teams (would qualify right now). */
+  qualifiers: Set<string>;
+  /** team key → heuristic confidence (0–100) of holding a top-`slots` spot. */
+  confidence: Map<string, number>;
+  /** Overall confidence in the current cut: mean confidence of the qualifiers. */
+  overall: number;
+};
+
 /**
- * Ranks the third-placed team from every group and returns the keys of the best
- * `count` (default 8) — the ones that would currently claim a Round-of-32
- * wildcard. Uses the FIFA tiebreakers we can derive from results: points, then
- * goal difference, then goals for (team conduct and world ranking aren't in the
- * feed). A final name sort keeps the cut deterministic when teams are level.
+ * Ranks the third-placed team from every group (FIFA tiebreakers we can derive:
+ * points → goal difference → goals for; conduct/world-ranking aren't in the feed)
+ * and estimates, for each, a heuristic confidence of finishing among the best
+ * `slots` (default 8) that take a Round-of-32 wildcard.
+ *
+ * The heuristic is deliberately simple and transparent: a team's confidence is
+ * driven by its points margin to the cut-off line, scaled by how many points are
+ * still in play (3 per remaining group game). With the groups complete the margin
+ * is decisive (100% in / 0% out); early on, when lots of points remain, every
+ * team trends toward 50%. It does not model team strength or intra-group movement.
  */
-export function bestThirdPlacedKeys(groups: GroupTable[], count = 8): Set<string> {
+export function assessThirdPlaced(groups: GroupTable[], slots = 8): ThirdPlaceAssessment {
   const thirds = groups
     .map((g) => g.rows[2])
     .filter((r): r is Standing => !!r)
     .sort(
       (a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.team.name.localeCompare(b.team.name)
     );
-  return new Set(thirds.slice(0, count).map((s) => teamKey(s.team)));
+
+  const remaining = (s: Standing) => Math.max(0, GROUP_GAMES - s.mp);
+  const swing = GROUP_GAMES * thirds.reduce((mx, s) => Math.max(mx, remaining(s)), 0);
+
+  const qualifiers = new Set<string>();
+  const confidence = new Map<string, number>();
+
+  thirds.forEach((s, i) => {
+    const inSlot = i < slots;
+    if (inSlot) qualifiers.add(teamKey(s.team));
+
+    let conf: number;
+    if (swing === 0) {
+      conf = inSlot ? 100 : 0; // group stage done → the cut is final
+    } else {
+      // Compare to the team on the other side of the 8th/9th boundary.
+      const boundary = inSlot ? thirds[slots] : thirds[slots - 1];
+      const margin = boundary ? s.pts - boundary.pts : inSlot ? swing : -swing;
+      conf = Math.round(clamp01(0.5 + (0.5 * margin) / swing) * 100);
+    }
+    confidence.set(teamKey(s.team), conf);
+  });
+
+  const inConfs = thirds.slice(0, slots).map((s) => confidence.get(teamKey(s.team)) ?? 0);
+  const overall = inConfs.length ? Math.round(inConfs.reduce((a, b) => a + b, 0) / inConfs.length) : 0;
+
+  return { qualifiers, confidence, overall };
+}
+
+function clamp01(n: number): number {
+  return n < 0 ? 0 : n > 1 ? 1 : n;
 }
