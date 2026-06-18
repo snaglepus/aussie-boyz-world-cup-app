@@ -2,44 +2,30 @@ import { toTeamRef } from './countries';
 import { TeamRef } from './types';
 
 /**
- * Tournament-winner odds from The Odds API (https://the-odds-api.com) — a free,
- * keyed, CORS-enabled aggregator of bookmaker prices, so it works straight from
- * the serverless web build. We average the implied probability across the UK
- * books' "outrights" market and normalise it to a clean win-chance percentage.
- *
- * Gated behind EXPO_PUBLIC_ODDS_API_KEY; without a key the favourites strip is
- * simply hidden. The free tier is ~500 requests/month, so the hook that calls
- * this caches aggressively (see useTitleOdds).
+ * Tournament-winner odds, read from a shared static snapshot (odds.json) that the
+ * deploy writes once at build time from The Odds API (see scripts/fetch-odds.mjs).
+ * Every visitor reads the same cached file — the API key never reaches the
+ * browser, and usage scales with builds, not users. We average the implied
+ * probability across the UK books' "outrights" market and normalise it to a
+ * clean win-chance percentage. If the snapshot is absent the strip stays hidden.
  */
 
-const BASE = 'https://api.the-odds-api.com/v4';
-const SPORT = 'soccer_fifa_world_cup_winner';
+// Same-origin static file under the Pages base path (matches app.json baseUrl).
+const SNAPSHOT_URL = '/aussie-boyz-world-cup-app/odds.json';
 
 export type TitleOdd = {
   team: TeamRef;
-  /** Approx. market decimal odds (from the averaged implied probability). */
+  /** Market decimal odds (averaged across books) — e.g. 5.0 → "$5.00". */
   decimal: number;
   /** Normalised win-chance percentage (the field sums to ~100%). */
   impliedPct: number;
 };
 
-function getKey(): string | null {
-  const k = (process.env.EXPO_PUBLIC_ODDS_API_KEY ?? '').trim();
-  return k ? k : null;
-}
-
-export function hasOddsSource(): boolean {
-  return getKey() !== null;
-}
-
 type AnyObj = Record<string, any>;
 
 export async function fetchTitleOdds(): Promise<TitleOdd[] | null> {
-  const key = getKey();
-  if (!key) return null;
-  const url = `${BASE}/sports/${SPORT}/odds/?apiKey=${key}&regions=uk&markets=outrights&oddsFormat=decimal`;
   try {
-    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    const res = await fetch(SNAPSHOT_URL, { headers: { Accept: 'application/json' } });
     if (!res.ok) return null;
     const data = (await res.json()) as AnyObj[];
     if (!Array.isArray(data)) return null;
