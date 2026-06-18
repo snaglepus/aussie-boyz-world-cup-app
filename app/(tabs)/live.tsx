@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card } from '../../src/components/Card';
@@ -25,6 +25,14 @@ export default function LiveScreen() {
   // a "checking" state rather than prematurely claiming there's no match.
   const loading = isLoading || !data;
 
+  // Pull fresh data every time the screen regains focus (tab switch, returning
+  // to the app), surfacing the same "refreshing" indicator as the poll.
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
+
   const subtitle = loading
     ? 'Checking for live matches…'
     : live.length
@@ -40,6 +48,15 @@ export default function LiveScreen() {
       }
     >
       <ScreenHeader title="Live" subtitle={subtitle} />
+
+      {isFetching && !loading ? (
+        <View style={styles.refreshRow}>
+          <ActivityIndicator size="small" color={theme.colors.accent} />
+          <Text style={[styles.refreshText, { color: theme.colors.textSecondary }]}>
+            Refreshing data now…
+          </Text>
+        </View>
+      ) : null}
 
       <View style={styles.body}>
         {loading ? (
@@ -111,5 +128,7 @@ const styles = StyleSheet.create({
   ctaText: { fontSize: 15, fontWeight: '700' },
   loadingBox: { alignItems: 'center', justifyContent: 'center', gap: 12, paddingVertical: 28 },
   loadingText: { fontSize: 14, fontWeight: '600' },
+  refreshRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingBottom: 10 },
+  refreshText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.2 },
   tapHint: { fontSize: 12, fontWeight: '600', textAlign: 'center', marginTop: 14 },
 });
