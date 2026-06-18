@@ -36,6 +36,7 @@ export default function RootLayout() {
               name="match/[id]"
               options={{ title: 'Match', presentation: 'card', headerBackTitle: 'Back' }}
             />
+            <Stack.Screen name="map" options={{ headerShown: false, presentation: 'card' }} />
           </Stack>
         </ThemeProvider>
       </SafeAreaProvider>

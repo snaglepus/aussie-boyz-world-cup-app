@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { Pressable, RefreshControl, SectionList, StyleSheet, Text, View } from 'react-native';
@@ -36,7 +37,12 @@ export default function MatchesScreen() {
       <ScreenHeader
         title="Matches"
         subtitle="World Cup 2026"
-        right={data?.source === 'bundled' ? <OfflineChip /> : undefined}
+        right={
+          <View style={styles.headerRight}>
+            {data?.source === 'bundled' ? <OfflineChip /> : null}
+            <GlobeButton onPress={() => router.push('/map')} />
+          </View>
+        }
       />
 
       <View style={styles.controls}>
@@ -105,6 +111,24 @@ function LiveBanner({ count, onPress }: { count: number; onPress: () => void }) 
   );
 }
 
+function GlobeButton({ onPress }: { onPress: () => void }) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="Open match map"
+      hitSlop={8}
+      style={({ pressed }) => [
+        styles.globeBtn,
+        { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, opacity: pressed ? 0.6 : 1 },
+      ]}
+    >
+      <Ionicons name="globe-outline" size={20} color={theme.colors.text} />
+    </Pressable>
+  );
+}
+
 function OfflineChip() {
   const theme = useTheme();
   return (
@@ -133,4 +157,9 @@ const styles = StyleSheet.create({
   bannerText: { fontSize: 13, fontWeight: '700', flex: 1 },
   chip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth },
   chipText: { fontSize: 11, fontWeight: '700' },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  globeBtn: {
+    width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+  },
 });

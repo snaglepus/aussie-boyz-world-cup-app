@@ -43,6 +43,9 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="twitter:title" content={TITLE} />
         <meta name="twitter:description" content={DESCRIPTION} />
 
+        {/* Leaflet base styles for the match map (web-only feature). */}
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
         {/* Keeps the body background consistent before the JS bundle mounts. */}
         <style dangerouslySetInnerHTML={{ __html: BODY_BG }} />
         <ScrollViewStyleReset />
