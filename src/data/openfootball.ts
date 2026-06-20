@@ -72,6 +72,8 @@ function normalise(m: RawMatch, index: number, now: Date): Match {
     status: live.status,
     statusLabel: live.label,
     source: 'static',
+    homeSlot: m.team1,
+    awaySlot: m.team2,
   };
 }
 
