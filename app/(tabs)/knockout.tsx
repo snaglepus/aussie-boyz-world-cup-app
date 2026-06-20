@@ -54,22 +54,18 @@ export default function KnockoutScreen() {
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-            {rounds.map((col, r) => {
-              const pitch = PITCH * 2 ** r;
-              const offset = (PITCH * (2 ** r - 1)) / 2;
-              return (
-                <View key={col.round} style={{ width: COL_W, height: columnHeight }}>
-                  <Text style={[styles.roundLabel, { color: theme.colors.textSecondary }]} numberOfLines={1}>
-                    {SHORT[col.round] ?? col.round}
-                  </Text>
-                  {col.matches.map((m, i) => (
-                    <View key={m.id} style={[styles.cardWrap, { top: LABEL_H + offset + i * pitch }]}>
-                      <MatchCard match={m} />
-                    </View>
-                  ))}
-                </View>
-              );
-            })}
+            {rounds.map((col) => (
+              <View key={col.round} style={{ width: COL_W, height: columnHeight }}>
+                <Text style={[styles.roundLabel, { color: theme.colors.textSecondary }]} numberOfLines={1}>
+                  {SHORT[col.round] ?? col.round}
+                </Text>
+                {col.matches.map((m) => (
+                  <View key={m.id} style={[styles.cardWrap, { top: LABEL_H + m.row * PITCH }]}>
+                    <MatchCard match={m} />
+                  </View>
+                ))}
+              </View>
+            ))}
           </ScrollView>
         </ScrollView>
       )}

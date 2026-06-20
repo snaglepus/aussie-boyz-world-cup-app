@@ -35,6 +35,9 @@ export type BracketMatch = {
   awayScore: number | null;
   status: MatchStatus;
   statusLabel: string;
+  /** Vertical position (in Round-of-32 row units) from the real feeder tree, so
+   * each match lines up between the two it actually draws from. */
+  row: number;
 };
 
 export type BracketColumn = { round: KnockoutRound; matches: BracketMatch[] };
@@ -81,6 +84,41 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
   }
 
   const thirdSlotAssign = assignThirds(ko, qualGroupTeam);
+
+  // Vertical layout rows from the actual feeder tree: walk down from the Final
+  // following each match's W## feeders to order the R32 leaves, then place every
+  // parent at the midpoint of its two children. This makes each card line up
+  // between the two matches it really draws from (not by match number).
+  const feedersOf = (m: Match): Match[] => {
+    const fs: Match[] = [];
+    for (const slot of [m.homeSlot, m.awaySlot]) {
+      const w = (slot ?? '').match(/^W(\d+)$/);
+      const f = w ? byNum.get(Number(w[1])) : undefined;
+      if (f) fs.push(f);
+    }
+    return fs;
+  };
+  const rowByNum = new Map<number, number>();
+  const leaves: number[] = [];
+  const collectLeaves = (m: Match) => {
+    const fs = feedersOf(m);
+    if (fs.length === 0) leaves.push(numOf(m));
+    else fs.forEach(collectLeaves);
+  };
+  const finalMatch = ko.find((m) => m.round === 'Final');
+  if (finalMatch) collectLeaves(finalMatch);
+  leaves.forEach((n, i) => rowByNum.set(n, i));
+  const rowOf = (m: Match): number => {
+    const n = numOf(m);
+    const cached = rowByNum.get(n);
+    if (cached !== undefined) return cached;
+    rowByNum.set(n, 0); // cycle guard
+    const fs = feedersOf(m);
+    const r = fs.length ? fs.reduce((s, f) => s + rowOf(f), 0) / fs.length : 0;
+    rowByNum.set(n, r);
+    return r;
+  };
+  for (const m of ko) rowOf(m);
 
   type Resolved = { home: Side; away: Side; winner: TeamRef | null; loser: TeamRef | null };
   const resolved = new Map<number, Resolved>();
@@ -170,6 +208,7 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
           awayScore: m.awayScore,
           status: m.status,
           statusLabel: m.statusLabel,
+          row: rowByNum.get(numOf(m)) ?? 0,
         };
       });
     return { round, matches };
