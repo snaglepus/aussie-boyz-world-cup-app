@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EmptyState } from '../../src/components/EmptyState';
@@ -28,7 +28,9 @@ export default function KnockoutScreen() {
   const bracket = useMemo(() => (data ? buildBracket(data, odds) : null), [data, odds]);
   const rounds = bracket?.columns.filter((c) => c.matches.length > 0) ?? [];
   const tallest = rounds.length ? rounds[0].matches.length : 0;
-  const columnHeight = LABEL_H + tallest * PITCH;
+  const bodyHeight = tallest * PITCH + 8; // scrollable card area height
+  const totalWidth = rounds.length * COL_W;
+  const [areaH, setAreaH] = useState(0);
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.bg, paddingTop: insets.top }}>
@@ -52,22 +54,39 @@ export default function KnockoutScreen() {
       ) : rounds.length === 0 ? (
         <EmptyState icon="git-network-outline" title="Bracket not available" message="The knockout bracket will appear here." />
       ) : (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-            {rounds.map((col) => (
-              <View key={col.round} style={{ width: COL_W, height: columnHeight }}>
-                <Text style={[styles.roundLabel, { color: theme.colors.textSecondary }]} numberOfLines={1}>
-                  {SHORT[col.round] ?? col.round}
-                </Text>
-                {col.matches.map((m) => (
-                  <View key={m.id} style={[styles.cardWrap, { top: LABEL_H + m.row * PITCH }]}>
-                    <MatchCard match={m} />
+        <View style={{ flex: 1 }} onLayout={(e) => setAreaH(e.nativeEvent.layout.height)}>
+          {
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={{ width: totalWidth, height: areaH || 600, paddingLeft: 16 }}>
+                {/* Sticky round labels: scroll horizontally with the columns but
+                    stay fixed vertically (they sit above the vertical scroller). */}
+                <View style={[styles.labelRow, { backgroundColor: theme.colors.bg }]}>
+                  {rounds.map((col) => (
+                    <Text
+                      key={col.round}
+                      numberOfLines={1}
+                      style={[styles.roundLabel, { width: COL_W, color: theme.colors.textSecondary }]}
+                    >
+                      {SHORT[col.round] ?? col.round}
+                    </Text>
+                  ))}
+                </View>
+
+                <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+                  <View style={{ width: totalWidth, height: bodyHeight }}>
+                    {rounds.map((col, ci) =>
+                      col.matches.map((m) => (
+                        <View key={m.id} style={[styles.cardWrap, { left: ci * COL_W, top: m.row * PITCH }]}>
+                          <MatchCard match={m} />
+                        </View>
+                      ))
+                    )}
                   </View>
-                ))}
+                </ScrollView>
               </View>
-            ))}
-          </ScrollView>
-        </ScrollView>
+            </ScrollView>
+          }
+        </View>
       )}
     </View>
   );
@@ -149,9 +168,9 @@ const styles = StyleSheet.create({
   banner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginBottom: 8, padding: 10, borderRadius: 10 },
   bannerText: { fontSize: 12, fontWeight: '700', flex: 1 },
   loading: { padding: 16 },
-  row: { paddingHorizontal: 16, paddingTop: 4 },
-  roundLabel: { position: 'absolute', top: 0, left: 0, width: CARD_W, fontSize: 12, fontWeight: '800', letterSpacing: 0.2 },
-  cardWrap: { position: 'absolute', left: 0, width: CARD_W, height: CARD_H },
+  labelRow: { flexDirection: 'row', height: LABEL_H, paddingTop: 4 },
+  roundLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 0.2 },
+  cardWrap: { position: 'absolute', width: CARD_W, height: CARD_H },
   card: { height: CARD_H, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 10, paddingVertical: 8, justifyContent: 'center', gap: 5 },
   meta: { fontSize: 10, fontWeight: '600', marginBottom: 1 },
   side: { flexDirection: 'row', alignItems: 'center', gap: 7 },
