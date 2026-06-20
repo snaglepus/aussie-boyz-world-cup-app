@@ -10,6 +10,7 @@ import { StatBars } from '../../src/components/StatBars';
 import { VenueMiniMap } from '../../src/components/VenueMiniMap';
 import { Match } from '../../src/data/types';
 import { resolveVenue } from '../../src/data/venues';
+import { useTitleOdds } from '../../src/hooks/useTitleOdds';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { buildBracket } from '../../src/utils/bracket';
@@ -19,12 +20,13 @@ export default function MatchDetail() {
   const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data } = useWorldCup();
+  const { data: odds } = useTitleOdds();
   const matchId = decodeURIComponent(id ?? '');
   const match = data?.matches.find((m: Match) => m.id === matchId);
 
   // Resolve knockout slot placeholders ("1A", "3A/B/…", "W73") to projected
   // teams so the summary shows the same line-up as the bracket, not raw codes.
-  const bracket = useMemo(() => (data ? buildBracket(data) : null), [data]);
+  const bracket = useMemo(() => (data ? buildBracket(data, odds) : null), [data, odds]);
   const bnode = useMemo(
     () => bracket?.columns.flatMap((c) => c.matches).find((m) => m.id === matchId) ?? null,
     [bracket, matchId]
@@ -42,7 +44,8 @@ export default function MatchDetail() {
   const display: Match = bnode
     ? { ...match, home: bnode.home.team ?? match.home, away: bnode.away.team ?? match.away }
     : match;
-  const projected = !!bnode && bracket != null && !bracket.finalised;
+  // A knockout tie that hasn't been played yet is a projected match-up.
+  const projected = !!bnode && bnode.status !== 'finished';
 
   const venue = resolveVenue(match.ground);
 
@@ -56,7 +59,7 @@ export default function MatchDetail() {
             <View style={[styles.estChip, { backgroundColor: theme.colors.playoff }]}>
               <Ionicons name="information-circle-outline" size={13} color={theme.colors.text} />
               <Text style={[styles.estText, { color: theme.colors.text }]}>
-                Projected line-up · confirmed after the group stage
+                Projected match-up · a guess from form, odds &amp; FIFA ranking
               </Text>
             </View>
           ) : null}
