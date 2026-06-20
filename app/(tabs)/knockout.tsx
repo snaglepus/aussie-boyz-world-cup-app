@@ -7,6 +7,7 @@ import { EmptyState } from '../../src/components/EmptyState';
 import { Flag } from '../../src/components/Flag';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { SkeletonBlock } from '../../src/components/Skeleton';
+import { useTitleOdds } from '../../src/hooks/useTitleOdds';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { BracketMatch, Side, buildBracket } from '../../src/utils/bracket';
@@ -22,8 +23,9 @@ export default function KnockoutScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { data, isLoading } = useWorldCup();
+  const { data: odds } = useTitleOdds();
 
-  const bracket = useMemo(() => (data ? buildBracket(data) : null), [data]);
+  const bracket = useMemo(() => (data ? buildBracket(data, odds) : null), [data, odds]);
   const rounds = bracket?.columns.filter((c) => c.matches.length > 0) ?? [];
   const tallest = rounds.length ? rounds[0].matches.length : 0;
   const columnHeight = LABEL_H + tallest * PITCH;
@@ -32,11 +34,11 @@ export default function KnockoutScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.bg, paddingTop: insets.top }}>
       <ScreenHeader title="Knockout" subtitle="World Cup 2026" />
 
-      {bracket && !bracket.finalised ? (
+      {bracket && bracket.estimated ? (
         <View style={[styles.banner, { backgroundColor: theme.colors.playoff }]}>
           <Ionicons name="information-circle-outline" size={15} color={theme.colors.text} />
           <Text style={[styles.bannerText, { color: theme.colors.text }]}>
-            Estimated — bracket is projected until the group stage is finalised.
+            Estimate only — match-ups are a guess from current form, betting odds &amp; FIFA ranking until games are played.
           </Text>
         </View>
       ) : null}

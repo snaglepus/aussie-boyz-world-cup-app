@@ -1,5 +1,7 @@
+import { TitleOdd } from '../data/odds';
 import { Match, MatchStatus, TeamRef, WorldCupData } from '../data/types';
 import { assessThirdPlaced, teamKey } from './standings';
+import { buildStrength } from './strength';
 
 /**
  * Resolves the knockout bracket from the (possibly incomplete) group data.
@@ -36,7 +38,13 @@ export type BracketMatch = {
 };
 
 export type BracketColumn = { round: KnockoutRound; matches: BracketMatch[] };
-export type Bracket = { columns: BracketColumn[]; finalised: boolean };
+export type Bracket = {
+  columns: BracketColumn[];
+  /** True once the group stage is decided (R32 teams are confirmed, not guessed). */
+  finalised: boolean;
+  /** True while any shown match-up is still a projection (i.e. not yet played). */
+  estimated: boolean;
+};
 
 function letter(group: string): string {
   return group.replace(/group/i, '').trim();
@@ -47,8 +55,9 @@ function numOf(m: Match): number {
   return mt ? Number(mt[1]) : NaN;
 }
 
-export function buildBracket(data: WorldCupData): Bracket {
+export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Bracket {
   const groups = data.groups;
+  const strength = buildStrength(groups, odds);
 
   // Group letter → teams in current finishing order.
   const rank = new Map<string, TeamRef[]>();
@@ -119,6 +128,7 @@ export function buildBracket(data: WorldCupData): Bracket {
     let winner: TeamRef | null = null;
     let loser: TeamRef | null = null;
     if (m.status === 'finished' && m.homeScore != null && m.awayScore != null && home.team && away.team) {
+      // Decided by the actual result.
       let homeWins: boolean | null = null;
       if (m.homeScore > m.awayScore) homeWins = true;
       else if (m.awayScore > m.homeScore) homeWins = false;
@@ -127,6 +137,13 @@ export function buildBracket(data: WorldCupData): Bracket {
         winner = homeWins ? home.team : away.team;
         loser = homeWins ? away.team : home.team;
       }
+    } else if (home.team && away.team) {
+      // Not played yet → project the stronger side through (a guess, see banner).
+      const sh = strength.get(teamKey(home.team)) ?? 0;
+      const sa = strength.get(teamKey(away.team)) ?? 0;
+      const homeWins = sh !== sa ? sh > sa : home.team.code <= away.team.code;
+      winner = homeWins ? home.team : away.team;
+      loser = homeWins ? away.team : home.team;
     }
     const out: Resolved = { home, away, winner, loser };
     resolved.set(num, out);
@@ -158,11 +175,14 @@ export function buildBracket(data: WorldCupData): Bracket {
     return { round, matches };
   });
 
-  // Finalised once every group fixture has been played.
+  // Finalised once every group fixture has been played (R32 teams then confirmed).
   const groupGames = data.matches.filter((m) => m.group && !m.home.isPlaceholder && !m.away.isPlaceholder);
   const finalised = groupGames.length > 0 && groupGames.every((m) => m.status === 'finished');
 
-  return { columns, finalised };
+  // Estimated while any displayed knockout tie hasn't actually been played.
+  const estimated = columns.some((c) => c.matches.some((m) => m.status !== 'finished'));
+
+  return { columns, finalised, estimated };
 }
 
 /**
