@@ -43,6 +43,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="knockout"
+        options={{
+          title: 'Knockout',
+          tabBarIcon: ({ color, size }) => <Ionicons name="git-network-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="table"
         options={{
           title: 'Groups',

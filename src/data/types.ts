@@ -57,6 +57,10 @@ export type Match = {
   statusLabel: string;
   /** Where the data came from, surfaced subtly in the UI. */
   source: 'live' | 'static';
+  /** Raw bracket slot codes for knockout fixtures, e.g. "1A", "2B", "3A/B/C/D/F",
+   * "W73" — used to resolve the knockout bracket. Undefined for group games. */
+  homeSlot?: string;
+  awaySlot?: string;
 };
 
 export type Standing = {
