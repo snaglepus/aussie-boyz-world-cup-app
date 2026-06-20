@@ -1,22 +1,34 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Card } from '../../src/components/Card';
 import { EmptyState } from '../../src/components/EmptyState';
 import { EventsTimeline } from '../../src/components/EventsTimeline';
 import { ScoreHero } from '../../src/components/ScoreHero';
 import { StatBars } from '../../src/components/StatBars';
+import { VenueMiniMap } from '../../src/components/VenueMiniMap';
 import { Match } from '../../src/data/types';
+import { resolveVenue } from '../../src/data/venues';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
+import { buildBracket } from '../../src/utils/bracket';
 import { formatMatchDay } from '../../src/utils/time';
 
 export default function MatchDetail() {
   const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data } = useWorldCup();
-  const match = data?.matches.find((m: Match) => m.id === decodeURIComponent(id ?? ''));
+  const matchId = decodeURIComponent(id ?? '');
+  const match = data?.matches.find((m: Match) => m.id === matchId);
+
+  // Resolve knockout slot placeholders ("1A", "3A/B/…", "W73") to projected
+  // teams so the summary shows the same line-up as the bracket, not raw codes.
+  const bracket = useMemo(() => (data ? buildBracket(data) : null), [data]);
+  const bnode = useMemo(
+    () => bracket?.columns.flatMap((c) => c.matches).find((m) => m.id === matchId) ?? null,
+    [bracket, matchId]
+  );
 
   if (!match) {
     return (
@@ -26,36 +38,64 @@ export default function MatchDetail() {
     );
   }
 
+  // For knockout fixtures, swap in the projected teams where we have them.
+  const display: Match = bnode
+    ? { ...match, home: bnode.home.team ?? match.home, away: bnode.away.team ?? match.away }
+    : match;
+  const projected = !!bnode && bracket != null && !bracket.finalised;
+
+  const venue = resolveVenue(match.ground);
+
   return (
     <>
-      <Stack.Screen options={{ title: `${match.home.code} v ${match.away.code}` }} />
+      <Stack.Screen options={{ title: `${display.home.code} v ${display.away.code}` }} />
       <ScrollView style={{ backgroundColor: theme.colors.bg }} contentContainerStyle={styles.body}>
         <Card>
-          <ScoreHero match={match} />
+          <ScoreHero match={display} />
+          {projected ? (
+            <View style={[styles.estChip, { backgroundColor: theme.colors.playoff }]}>
+              <Ionicons name="information-circle-outline" size={13} color={theme.colors.text} />
+              <Text style={[styles.estText, { color: theme.colors.text }]}>
+                Projected line-up · confirmed after the group stage
+              </Text>
+            </View>
+          ) : null}
         </Card>
 
-        {match.goals.length || match.cards.length ? (
+        {display.goals.length || display.cards.length ? (
           <Card title="Events">
-            <EventsTimeline match={match} />
+            <EventsTimeline match={display} />
           </Card>
         ) : null}
 
-        {match.stats.length ? (
+        {display.stats.length ? (
           <Card title="Match stats">
-            <StatBars stats={match.stats} />
+            <StatBars stats={display.stats} />
           </Card>
         ) : null}
 
         <Card title="Match info">
           <InfoRow icon="trophy-outline" label={match.group ? `${match.group} · ${match.round}` : match.round} />
           <InfoRow icon="calendar-outline" label={formatMatchDay(match.kickoff ? new Date(match.kickoff) : null, match.date)} />
-          {match.ground ? <InfoRow icon="location-outline" label={match.ground} /> : null}
           <InfoRow
-            icon={match.source === 'live' ? 'flash-outline' : 'cloud-download-outline'}
-            label={match.source === 'live' ? 'Real-time data' : 'Schedule & results feed'}
-            last
+            icon="location-outline"
+            label={venue ? `${venue.stadium} · ${venue.city}` : match.ground ?? 'Venue TBC'}
+            last={!venue}
           />
+          {venue ? (
+            <InfoRow
+              icon={match.source === 'live' ? 'flash-outline' : 'cloud-download-outline'}
+              label={match.source === 'live' ? 'Real-time data' : 'Schedule & results feed'}
+              last
+            />
+          ) : null}
         </Card>
+
+        {venue ? (
+          <Card title="Location">
+            <VenueMiniMap match={display} venue={venue} />
+          </Card>
+        ) : null}
       </ScrollView>
     </>
   );
@@ -84,4 +124,6 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
   infoText: { fontSize: 15, fontWeight: '600', flex: 1 },
+  estChip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 10, borderRadius: 10, marginTop: 4 },
+  estText: { fontSize: 12, fontWeight: '700' },
 });
