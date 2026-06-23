@@ -44,8 +44,8 @@ export default function MatchDetail() {
   const display: Match = bnode
     ? { ...match, home: bnode.home.team ?? match.home, away: bnode.away.team ?? match.away }
     : match;
-  // A knockout tie that hasn't been played yet is a projected match-up.
-  const projected = !!bnode && bnode.status !== 'finished';
+  // Projected while either side is still a guess (not yet confirmed).
+  const projected = !!bnode && (!bnode.home.confirmed || !bnode.away.confirmed);
 
   const venue = resolveVenue(match.ground);
 

@@ -22,7 +22,12 @@ import { buildStrength } from './strength';
 const ROUND_ORDER = ['Round of 32', 'Round of 16', 'Quarter-final', 'Semi-final', 'Final'] as const;
 export type KnockoutRound = (typeof ROUND_ORDER)[number];
 
-export type Side = { team: TeamRef | null; label: string };
+export type Side = {
+  team: TeamRef | null;
+  label: string;
+  /** True when this team is actually decided (group/match played), not a guess. */
+  confirmed: boolean;
+};
 
 export type BracketMatch = {
   id: string;
@@ -86,6 +91,10 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
 
   const thirdSlotAssign = assignThirds(ko, qualGroupTeam);
 
+  // Group winners/runners-up are locked once every group fixture is played.
+  const groupGames = data.matches.filter((m) => m.group && !m.home.isPlaceholder && !m.away.isPlaceholder);
+  const groupFinalised = groupGames.length > 0 && groupGames.every((m) => m.status === 'finished');
+
   // Vertical layout rows from the actual feeder tree: walk down from the Final
   // following each match's W## feeders to order the R32 leaves, then place every
   // parent at the midpoint of its two children. This makes each card line up
@@ -121,7 +130,14 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
   };
   for (const m of ko) rowOf(m);
 
-  type Resolved = { home: Side; away: Side; winner: TeamRef | null; loser: TeamRef | null };
+  type Resolved = {
+    home: Side;
+    away: Side;
+    winner: TeamRef | null;
+    loser: TeamRef | null;
+    /** True when the result is real (match played), so winner/loser are confirmed. */
+    decided: boolean;
+  };
   const resolved = new Map<number, Resolved>();
 
   function resolveSide(raw: string | undefined, matchNum: number): Side {
@@ -129,27 +145,35 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
     let g: RegExpMatchArray | null;
     if ((g = s.match(/^([12])([A-L])$/))) {
       const team = (rank.get(g[2]) ?? [])[Number(g[1]) - 1];
-      if (team && !team.isPlaceholder) return { team, label: team.name };
-      return { team: null, label: g[1] === '1' ? `Winner Grp ${g[2]}` : `Runner-up ${g[2]}` };
+      if (team && !team.isPlaceholder) return { team, label: team.name, confirmed: groupFinalised };
+      return { team: null, label: g[1] === '1' ? `Winner Grp ${g[2]}` : `Runner-up ${g[2]}`, confirmed: false };
     }
     if (/^3[A-L/]+$/.test(s)) {
+      // A coded third slot is still our approximation (openfootball swaps in the
+      // real name once it's official), so never treat it as confirmed.
       const team = thirdSlotAssign.get(matchNum);
-      return team ? { team, label: team.name } : { team: null, label: `3rd ${s.slice(1)}` };
+      return team
+        ? { team, label: team.name, confirmed: false }
+        : { team: null, label: `3rd ${s.slice(1)}`, confirmed: false };
     }
     if ((g = s.match(/^W(\d+)$/))) {
-      const w = sideWinner(Number(g[1]));
-      return w ? { team: w, label: w.name } : { team: null, label: `Winner M${g[1]}` };
+      const r = resolveMatch(Number(g[1]));
+      return r.winner
+        ? { team: r.winner, label: r.winner.name, confirmed: r.decided }
+        : { team: null, label: `Winner M${g[1]}`, confirmed: false };
     }
     if ((g = s.match(/^L(\d+)$/))) {
-      const l = sideLoser(Number(g[1]));
-      return l ? { team: l, label: l.name } : { team: null, label: `Loser M${g[1]}` };
+      const r = resolveMatch(Number(g[1]));
+      return r.loser
+        ? { team: r.loser, label: r.loser.name, confirmed: r.decided }
+        : { team: null, label: `Loser M${g[1]}`, confirmed: false };
     }
-    // openfootball fills real team names into slots as the bracket firms up.
+    // openfootball fills the real team name into a slot once it's confirmed.
     if (s) {
       const t = toTeamRef(s);
-      if (!t.isPlaceholder) return { team: t, label: t.name };
+      if (!t.isPlaceholder) return { team: t, label: t.name, confirmed: true };
     }
-    return { team: null, label: s || 'TBD' };
+    return { team: null, label: s || 'TBD', confirmed: false };
   }
 
   function resolveMatch(num: number): Resolved {
@@ -157,10 +181,11 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
     if (cached) return cached;
     const m = byNum.get(num);
     const placeholder: Resolved = {
-      home: { team: null, label: 'TBD' },
-      away: { team: null, label: 'TBD' },
+      home: { team: null, label: 'TBD', confirmed: false },
+      away: { team: null, label: 'TBD', confirmed: false },
       winner: null,
       loser: null,
+      decided: false,
     };
     if (!m) {
       resolved.set(num, placeholder);
@@ -171,6 +196,7 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
     const away = resolveSide(m.awaySlot, num);
     let winner: TeamRef | null = null;
     let loser: TeamRef | null = null;
+    let decided = false;
     if (m.status === 'finished' && m.homeScore != null && m.awayScore != null && home.team && away.team) {
       // Decided by the actual result.
       let homeWins: boolean | null = null;
@@ -180,6 +206,7 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
       if (homeWins !== null) {
         winner = homeWins ? home.team : away.team;
         loser = homeWins ? away.team : home.team;
+        decided = true;
       }
     } else if (home.team && away.team) {
       // Not played yet → project the stronger side through (a guess, see banner).
@@ -189,12 +216,10 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
       winner = homeWins ? home.team : away.team;
       loser = homeWins ? away.team : home.team;
     }
-    const out: Resolved = { home, away, winner, loser };
+    const out: Resolved = { home, away, winner, loser, decided };
     resolved.set(num, out);
     return out;
   }
-  const sideWinner = (n: number) => resolveMatch(n).winner;
-  const sideLoser = (n: number) => resolveMatch(n).loser;
 
   const columns: BracketColumn[] = ROUND_ORDER.map((round) => {
     const matches = ko
@@ -220,14 +245,10 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
     return { round, matches };
   });
 
-  // Finalised once every group fixture has been played (R32 teams then confirmed).
-  const groupGames = data.matches.filter((m) => m.group && !m.home.isPlaceholder && !m.away.isPlaceholder);
-  const finalised = groupGames.length > 0 && groupGames.every((m) => m.status === 'finished');
+  // Estimated while any shown side is still a projection (not yet confirmed).
+  const estimated = columns.some((c) => c.matches.some((m) => !m.home.confirmed || !m.away.confirmed));
 
-  // Estimated while any displayed knockout tie hasn't actually been played.
-  const estimated = columns.some((c) => c.matches.some((m) => m.status !== 'finished'));
-
-  return { columns, finalised, estimated };
+  return { columns, finalised: groupFinalised, estimated };
 }
 
 /**

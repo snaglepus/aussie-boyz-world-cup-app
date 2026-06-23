@@ -38,10 +38,17 @@ export default function KnockoutScreen() {
 
       {bracket && bracket.estimated ? (
         <View style={[styles.banner, { backgroundColor: theme.colors.playoff }]}>
-          <Ionicons name="information-circle-outline" size={15} color={theme.colors.text} />
-          <Text style={[styles.bannerText, { color: theme.colors.text }]}>
-            Estimate only — match-ups are a guess from current form, betting odds &amp; FIFA ranking until games are played.
-          </Text>
+          <Ionicons name="information-circle-outline" size={15} color={theme.colors.text} style={{ marginTop: 1 }} />
+          <View style={styles.bannerBody}>
+            <Text style={[styles.bannerText, { color: theme.colors.text }]}>
+              Match-ups are estimated from current form, betting odds &amp; FIFA ranking until games are played.
+            </Text>
+            <View style={styles.legendRow}>
+              <Ionicons name="checkmark-circle" size={13} color={theme.colors.accent} />
+              <Text style={[styles.legendText, { color: theme.colors.text }]}>Confirmed</Text>
+              <Text style={[styles.legendText, { color: theme.colors.textSecondary }]}>· others are projected</Text>
+            </View>
+          </View>
         </View>
       ) : null}
 
@@ -130,6 +137,10 @@ function MatchCard({ match }: { match: BracketMatch }) {
 function SideRow({ side, score }: { side: Side; score: number | null }) {
   const theme = useTheme();
   const known = !!side.team;
+  const confirmed = known && side.confirmed;
+  // Confirmed teams render strong; projected (estimated) ones are muted; TBD is faint.
+  const color = confirmed ? theme.colors.text : known ? theme.colors.textSecondary : theme.colors.textMuted;
+
   return (
     <View style={styles.side}>
       {known ? (
@@ -137,15 +148,12 @@ function SideRow({ side, score }: { side: Side; score: number | null }) {
       ) : (
         <View style={[styles.tbdDot, { backgroundColor: theme.colors.surfaceAlt, borderColor: theme.colors.border }]} />
       )}
-      <Text
-        numberOfLines={1}
-        style={[
-          styles.sideName,
-          { color: known ? theme.colors.text : theme.colors.textMuted, fontWeight: known ? '700' : '600' },
-        ]}
-      >
+      <Text numberOfLines={1} style={[styles.sideName, { color, fontWeight: confirmed ? '800' : '600' }]}>
         {side.label}
       </Text>
+      {confirmed ? (
+        <Ionicons name="checkmark-circle" size={13} color={theme.colors.accent} style={styles.tick} />
+      ) : null}
       {score != null ? (
         <Text style={[styles.score, { color: theme.colors.text }]}>{score}</Text>
       ) : null}
@@ -165,8 +173,11 @@ function city(ground: string): string {
 }
 
 const styles = StyleSheet.create({
-  banner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginBottom: 8, padding: 10, borderRadius: 10 },
-  bannerText: { fontSize: 12, fontWeight: '700', flex: 1 },
+  banner: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginHorizontal: 16, marginBottom: 8, padding: 10, borderRadius: 10 },
+  bannerBody: { flex: 1, gap: 5 },
+  bannerText: { fontSize: 12, fontWeight: '700' },
+  legendRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  legendText: { fontSize: 11, fontWeight: '700' },
   loading: { padding: 16 },
   labelRow: { flexDirection: 'row', height: LABEL_H, paddingTop: 4 },
   roundLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 0.2 },
@@ -176,5 +187,6 @@ const styles = StyleSheet.create({
   side: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   tbdDot: { width: 18, height: 13, borderRadius: 3, borderWidth: StyleSheet.hairlineWidth },
   sideName: { fontSize: 12.5, flex: 1 },
+  tick: { marginLeft: -2 },
   score: { fontSize: 13, fontWeight: '800', minWidth: 12, textAlign: 'right' },
 });
