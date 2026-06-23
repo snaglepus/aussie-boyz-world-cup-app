@@ -1,4 +1,5 @@
 import { TitleOdd } from '../data/odds';
+import { toTeamRef } from '../data/countries';
 import { Match, MatchStatus, TeamRef, WorldCupData } from '../data/types';
 import { assessThirdPlaced, teamKey } from './standings';
 import { buildStrength } from './strength';
@@ -142,6 +143,11 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
     if ((g = s.match(/^L(\d+)$/))) {
       const l = sideLoser(Number(g[1]));
       return l ? { team: l, label: l.name } : { team: null, label: `Loser M${g[1]}` };
+    }
+    // openfootball fills real team names into slots as the bracket firms up.
+    if (s) {
+      const t = toTeamRef(s);
+      if (!t.isPlaceholder) return { team: t, label: t.name };
     }
     return { team: null, label: s || 'TBD' };
   }
