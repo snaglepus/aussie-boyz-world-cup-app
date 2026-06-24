@@ -16,3 +16,18 @@ export const FIFA_POINTS: Record<string, number> = {
 
 /** Fallback for any nation not in the snapshot. */
 export const FIFA_DEFAULT = 1300;
+
+/**
+ * Approximate current FIFA men's world ranking position per nation (3-letter
+ * code). A static snapshot for display — not live. Non-qualified nations occupy
+ * some intervening positions, so these aren't contiguous.
+ */
+export const FIFA_RANK: Record<string, number> = {
+  ARG: 1, ESP: 2, FRA: 3, ENG: 4, BRA: 5, POR: 6, NED: 7, BEL: 8, CRO: 9, GER: 10,
+  MAR: 11, COL: 13, URU: 14, USA: 15, MEX: 16, JPN: 17, IRN: 18, SUI: 19, SEN: 20,
+  AUT: 22, KOR: 23, ECU: 24, AUS: 26, SWE: 27, TUR: 28, NOR: 30, CAN: 31, QAT: 35,
+  ALG: 36, SCO: 39, CIV: 40, GHA: 41, TUN: 42, PAN: 44, PAR: 46, EGY: 33, COD: 54,
+  IRQ: 55, UZB: 57, RSA: 58, KSA: 60, JOR: 62, CPV: 70, BIH: 75, CUW: 82, HAI: 83,
+  NZL: 89,
+};
+
