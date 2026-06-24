@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card } from '../../src/components/Card';
@@ -53,6 +53,25 @@ export default function TeamsScreen() {
     groups.forEach((g) => g.rows.forEach((r) => names.add(r.team.name)));
     return [...names].sort();
   }, [teamIndex, groups]);
+
+  // Deep link: other screens push /teams?team=<name>. Resolve the incoming name
+  // (or alias) to the canonical squad name by code, then select it. Guarded so a
+  // manual pick isn't clobbered when the squad list loads after navigation.
+  const params = useLocalSearchParams<{ team?: string }>();
+  const appliedTeam = useRef<string | null>(null);
+  useEffect(() => {
+    const raw = (Array.isArray(params.team) ? params.team[0] : params.team) ?? null;
+    if (!raw || raw === appliedTeam.current) return;
+    const code = toTeamRef(raw).code;
+    const canonical = teamNames.find((n: string) => toTeamRef(n).code === code);
+    if (canonical) {
+      appliedTeam.current = raw;
+      setSelected(canonical);
+    } else {
+      // Squad list not ready (or unknown team): show it now, resolve once loaded.
+      setSelected(raw);
+    }
+  }, [params.team, teamNames]);
 
   const ref = useMemo(() => toTeamRef(selected), [selected]);
   const info = teamIndex?.byName.get(selected.toLowerCase()) ?? null;
