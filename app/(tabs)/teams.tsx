@@ -103,10 +103,7 @@ export default function TeamsScreen() {
         <HeaderCard ref_={ref} info={info} odd={odd} />
         {placement ? <PlacementCard placement={placement} /> : null}
         {group ? (
-          <View style={{ marginBottom: 8 }}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Group {group.group.replace(/group/i, '').trim()}</Text>
-            <StandingsTable table={group} bestThirds={thirds.qualifiers} confidence={thirds.confidence} />
-          </View>
+          <StandingsTable table={group} bestThirds={thirds.qualifiers} confidence={thirds.confidence} />
         ) : null}
         <MatchHistory matches={matches} ref_={ref} />
         <SquadCard info={info} loading={!teamIndex} />
@@ -356,7 +353,6 @@ const styles = StyleSheet.create({
   selector: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 11, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth },
   selectorText: { flex: 1, fontSize: 16, fontWeight: '800' },
   body: { paddingHorizontal: 16, paddingBottom: 32, paddingTop: 2, gap: 14 },
-  sectionTitle: { fontSize: 18, fontWeight: '800', marginBottom: 10, marginLeft: 2 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   teamName: { fontSize: 22, fontWeight: '900', letterSpacing: -0.4 },
   teamSub: { fontSize: 13, fontWeight: '600', marginTop: 2 },
