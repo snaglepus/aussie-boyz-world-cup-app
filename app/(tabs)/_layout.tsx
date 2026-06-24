@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { liveMatches } from '../../src/data/service';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
@@ -13,6 +13,10 @@ export default function TabsLayout() {
   const { data } = useWorldCup();
   const liveCount = data ? liveMatches(data).length : 0;
 
+  // Lift the labels off the bottom edge so they aren't clipped. On native we add
+  // the home-indicator inset; on web the browser owns that area, so keep it small.
+  const bottomPad = Platform.OS === 'web' ? 10 : Math.max(insets.bottom, 10);
+
   return (
     <Tabs
       initialRouteName="matches"
@@ -20,17 +24,14 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: theme.colors.accent,
         tabBarInactiveTintColor: theme.colors.textMuted,
-        // Reserve room for the label + the device's home-indicator inset so the
-        // text isn't clipped at the bottom edge.
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.hairline,
           borderTopWidth: StyleSheet.hairlineWidth,
-          height: 58 + insets.bottom,
-          paddingTop: 8,
-          paddingBottom: Math.max(insets.bottom, 10),
+          height: 56 + bottomPad,
+          paddingBottom: bottomPad,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '700', marginTop: 2 },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
       }}
     >
       <Tabs.Screen
