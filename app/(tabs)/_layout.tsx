@@ -2,12 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { liveMatches } from '../../src/data/service';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
 
 export default function TabsLayout() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { data } = useWorldCup();
   const liveCount = data ? liveMatches(data).length : 0;
 
@@ -18,12 +20,17 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: theme.colors.accent,
         tabBarInactiveTintColor: theme.colors.textMuted,
+        // Reserve room for the label + the device's home-indicator inset so the
+        // text isn't clipped at the bottom edge.
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.hairline,
           borderTopWidth: StyleSheet.hairlineWidth,
+          height: 58 + insets.bottom,
+          paddingTop: 8,
+          paddingBottom: Math.max(insets.bottom, 10),
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '700', marginTop: 2 },
       }}
     >
       <Tabs.Screen
