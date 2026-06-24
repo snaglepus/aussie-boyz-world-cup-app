@@ -12,9 +12,10 @@ export function StatBars({ stats }: { stats: MatchStats[] }) {
   return (
     <View style={styles.wrap}>
       {stats.map((s) => {
-        const total = s.home + s.away || 1;
-        const homePct = (s.home / total) * 100;
-        const awayPct = 100 - homePct;
+        const total = s.home + s.away;
+        // When neither side has any (e.g. 0 red cards), draw no bar at all.
+        const homePct = total ? (s.home / total) * 100 : 0;
+        const awayPct = total ? 100 - homePct : 0;
         const fmt = (v: number) => (s.percent ? `${Math.round(v)}%` : `${v}`);
         return (
           <View key={s.label} style={styles.statBlock}>

@@ -1,11 +1,18 @@
 import { toTeamRef } from './countries';
-import { MatchStats } from './types';
+import { CardEvent, MatchStats } from './types';
+
+export type EspnMatchDetail = {
+  stats: MatchStats[];
+  /** Card events parsed from the summary, used when the base feed has none. */
+  cards: CardEvent[];
+};
 
 /**
  * Full per-match team stats from ESPN's public summary endpoint (keyless,
  * CORS-enabled). openfootball carries results + scorers but no stats/cards for
  * past games, so for a finished match we locate its ESPN event (by date + the
- * two teams) and pull possession, shots, corners, fouls and card counts.
+ * two teams) and pull possession, shots, corners, fouls and card counts — plus
+ * the individual booking events so the timeline matches the stat counts.
  */
 const SCOREBOARD = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard';
 const SUMMARY = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary';
@@ -42,11 +49,35 @@ async function findEventId(ymd: string, homeCode: string, awayCode: string): Pro
   return null;
 }
 
+/** Pull booking events from the summary's keyEvents, mapped to home/away. */
+function parseCards(sum: AnyObj, homeId?: string, awayId?: string): CardEvent[] {
+  const events: AnyObj[] = sum?.keyEvents ?? sum?.commentary ?? [];
+  const cards: CardEvent[] = [];
+  for (const ev of Array.isArray(events) ? events : []) {
+    const text = String(ev?.type?.text ?? ev?.type?.name ?? '').toLowerCase();
+    const isRed = ev?.redCard === true || text.includes('red');
+    const isYellow = ev?.yellowCard === true || text.includes('yellow');
+    if (!isRed && !isYellow) continue;
+    const teamId = String(ev?.team?.id ?? '');
+    const team: 'home' | 'away' | null =
+      teamId && teamId === String(homeId) ? 'home' : teamId && teamId === String(awayId) ? 'away' : null;
+    if (!team) continue;
+    const who =
+      ev?.athletesInvolved?.[0]?.displayName ??
+      ev?.participants?.[0]?.athlete?.displayName ??
+      ev?.athletesInvolved?.[0]?.shortName ??
+      'Booking';
+    const minute = String(ev?.clock?.displayValue ?? ev?.time?.displayValue ?? '').replace(/'/g, '').trim();
+    cards.push({ name: who, minute, color: isRed ? 'red' : 'yellow', team });
+  }
+  return cards;
+}
+
 export async function fetchEspnMatchStats(
   ymd: string,
   homeCode: string,
   awayCode: string
-): Promise<MatchStats[] | null> {
+): Promise<EspnMatchDetail | null> {
   try {
     const eventId = await findEventId(ymd, homeCode, awayCode);
     if (!eventId) return null;
@@ -81,8 +112,20 @@ export async function fetchEspnMatchStats(
     add('Fouls', 'foulsCommitted');
     add('Yellow cards', 'yellowCards');
     add('Red cards', 'redCards');
-    return rows.length ? rows : null;
+
+    const cards = parseCards(sum, home.team?.id, away.team?.id).sort(
+      (x, y) => minuteNum(x.minute) - minuteNum(y.minute)
+    );
+
+    if (!rows.length && !cards.length) return null;
+    return { stats: rows, cards };
   } catch {
     return null;
   }
+}
+
+function minuteNum(minute: string): number {
+  const m = minute.match(/(\d+)(?:\+(\d+))?/);
+  if (!m) return 999;
+  return parseInt(m[1], 10) + (m[2] ? parseInt(m[2], 10) / 100 : 0);
 }

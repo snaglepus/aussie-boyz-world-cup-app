@@ -1,7 +1,9 @@
+import { useRouter } from 'expo-router';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { tabularNums } from '../theme/theme';
+import { teamHref } from '../utils/nav';
 import { BandKey, Clinch, PlayoffBand, PlayoffRow } from '../utils/playoffRanking';
 import { Flag } from './Flag';
 
@@ -45,8 +47,10 @@ export function PlayoffList({ bands }: { bands: PlayoffBand[] }) {
 
 function Row({ row, accent, last }: { row: PlayoffRow; accent: string; last: boolean }) {
   const theme = useTheme();
+  const router = useRouter();
   return (
-    <View
+    <Pressable
+      onPress={() => router.navigate(teamHref(row.team))}
       style={[
         styles.row,
         { borderBottomColor: theme.colors.hairline, borderBottomWidth: last ? 0 : StyleSheet.hairlineWidth },
@@ -63,7 +67,7 @@ function Row({ row, accent, last }: { row: PlayoffRow; accent: string; last: boo
       </Text>
       <ClinchBadge clinch={row.clinch} />
       <Text style={[styles.pts, tabularNums, { color: theme.colors.text }]}>{row.pts}</Text>
-    </View>
+    </Pressable>
   );
 }
 

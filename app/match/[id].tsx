@@ -32,8 +32,8 @@ export default function MatchDetail() {
     () => bracket?.columns.flatMap((c) => c.matches).find((m) => m.id === matchId) ?? null,
     [bracket, matchId]
   );
-  // Pull full team stats from ESPN for finished games that lack them.
-  const { data: fetchedStats } = useMatchStats(match);
+  // Pull full team stats + booking events from ESPN for finished games that lack them.
+  const { data: fetchedDetail } = useMatchStats(match);
 
   if (!match) {
     return (
@@ -47,8 +47,14 @@ export default function MatchDetail() {
   const base: Match = bnode
     ? { ...match, home: bnode.home.team ?? match.home, away: bnode.away.team ?? match.away }
     : match;
-  const display: Match =
-    base.stats.length === 0 && fetchedStats && fetchedStats.length ? { ...base, stats: fetchedStats } : base;
+  // Overlay ESPN stats/cards only where the base feed is missing them.
+  const display: Match = fetchedDetail
+    ? {
+        ...base,
+        stats: base.stats.length === 0 && fetchedDetail.stats.length ? fetchedDetail.stats : base.stats,
+        cards: base.cards.length === 0 && fetchedDetail.cards.length ? fetchedDetail.cards : base.cards,
+      }
+    : base;
   // Projected while either side is still a guess (not yet confirmed).
   const projected = !!bnode && (!bnode.home.confirmed || !bnode.away.confirmed);
 
