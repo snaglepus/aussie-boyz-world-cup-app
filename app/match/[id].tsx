@@ -10,6 +10,7 @@ import { StatBars } from '../../src/components/StatBars';
 import { VenueMiniMap } from '../../src/components/VenueMiniMap';
 import { Match } from '../../src/data/types';
 import { resolveVenue } from '../../src/data/venues';
+import { useMatchStats } from '../../src/hooks/useMatchStats';
 import { useTitleOdds } from '../../src/hooks/useTitleOdds';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
@@ -31,6 +32,8 @@ export default function MatchDetail() {
     () => bracket?.columns.flatMap((c) => c.matches).find((m) => m.id === matchId) ?? null,
     [bracket, matchId]
   );
+  // Pull full team stats from ESPN for finished games that lack them.
+  const { data: fetchedStats } = useMatchStats(match);
 
   if (!match) {
     return (
@@ -41,9 +44,11 @@ export default function MatchDetail() {
   }
 
   // For knockout fixtures, swap in the projected teams where we have them.
-  const display: Match = bnode
+  const base: Match = bnode
     ? { ...match, home: bnode.home.team ?? match.home, away: bnode.away.team ?? match.away }
     : match;
+  const display: Match =
+    base.stats.length === 0 && fetchedStats && fetchedStats.length ? { ...base, stats: fetchedStats } : base;
   // Projected while either side is still a guess (not yet confirmed).
   const projected = !!bnode && (!bnode.home.confirmed || !bnode.away.confirmed);
 
