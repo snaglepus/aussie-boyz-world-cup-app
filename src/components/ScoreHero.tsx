@@ -1,8 +1,10 @@
+import { useRouter } from 'expo-router';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { Match } from '../data/types';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Match, TeamRef } from '../data/types';
 import { useTheme } from '../theme/ThemeProvider';
 import { tabularNums } from '../theme/theme';
+import { canOpenTeam, teamHref } from '../utils/nav';
 import { formatKickoffTime } from '../utils/time';
 import { Flag } from './Flag';
 import { LiveBadge } from './LiveBadge';
@@ -10,10 +12,29 @@ import { LiveBadge } from './LiveBadge';
 /** Big, glanceable score block: flag + name each side, score is the largest type. */
 export function ScoreHero({ match }: { match: Match }) {
   const theme = useTheme();
+  const router = useRouter();
   const live = match.status === 'live';
   const finished = match.status === 'finished';
   const showScore = live || finished;
   const scoreColor = live ? theme.colors.live : theme.colors.text;
+
+  // Each side links to that team's profile on the Teams tab (skip placeholders).
+  const renderSide = (team: TeamRef) => {
+    const body = (
+      <>
+        <Flag team={team} size={56} />
+        <Text numberOfLines={2} style={[styles.team, { color: theme.colors.text }]}>
+          {team.name}
+        </Text>
+      </>
+    );
+    if (!canOpenTeam(team)) return <View style={styles.side}>{body}</View>;
+    return (
+      <Pressable style={styles.side} onPress={() => router.navigate(teamHref(team))} hitSlop={6}>
+        {body}
+      </Pressable>
+    );
+  };
 
   return (
     <View style={styles.wrap}>
@@ -28,12 +49,7 @@ export function ScoreHero({ match }: { match: Match }) {
       </View>
 
       <View style={styles.row}>
-        <View style={styles.side}>
-          <Flag team={match.home} size={56} />
-          <Text numberOfLines={2} style={[styles.team, { color: theme.colors.text }]}>
-            {match.home.name}
-          </Text>
-        </View>
+        {renderSide(match.home)}
 
         <View style={styles.center}>
           {showScore ? (
@@ -56,12 +72,7 @@ export function ScoreHero({ match }: { match: Match }) {
           ) : null}
         </View>
 
-        <View style={styles.side}>
-          <Flag team={match.away} size={56} />
-          <Text numberOfLines={2} style={[styles.team, { color: theme.colors.text }]}>
-            {match.away.name}
-          </Text>
-        </View>
+        {renderSide(match.away)}
       </View>
 
       {match.ground ? (

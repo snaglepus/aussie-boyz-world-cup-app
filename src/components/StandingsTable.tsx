@@ -1,8 +1,10 @@
+import { useRouter } from 'expo-router';
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { GroupTable, Standing } from '../data/types';
 import { useTheme } from '../theme/ThemeProvider';
 import { tabularNums } from '../theme/theme';
+import { teamHref } from '../utils/nav';
 import { teamKey } from '../utils/standings';
 import { Flag } from './Flag';
 import { FormPills } from './FormPills';
@@ -90,6 +92,7 @@ function Row({
   confidence?: number;
 }) {
   const theme = useTheme();
+  const router = useRouter();
   // Top 2 advance; only a 3rd that ranks among the best 8 takes a wildcard spot.
   const bestThird = position === 3 && isBestThird;
   const band =
@@ -120,7 +123,11 @@ function Row({
         <View style={[styles.posBar, { backgroundColor: accent }]} />
         <Text style={[styles.pos, tabularNums, { color: theme.colors.textSecondary }]}>{position}</Text>
       </View>
-      <View style={[styles.teamCell, { width: COL.team }]}>
+      <Pressable
+        style={[styles.teamCell, { width: COL.team }]}
+        onPress={() => router.navigate(teamHref(row.team))}
+        hitSlop={4}
+      >
         <Flag team={row.team} size={22} />
         <Text numberOfLines={1} style={[styles.teamName, { color: theme.colors.text }]}>
           {row.team.name}
@@ -137,7 +144,7 @@ function Row({
             </Text>
           </View>
         ) : null}
-      </View>
+      </Pressable>
       {stat(row.mp, COL.stat)}
       {stat(row.w, COL.stat)}
       {stat(row.d, COL.stat)}
