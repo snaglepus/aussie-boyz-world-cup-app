@@ -44,6 +44,9 @@ export type BracketMatch = {
   /** Vertical position (in Round-of-32 row units) from the real feeder tree, so
    * each match lines up between the two it actually draws from. */
   row: number;
+  /** Ids of the (up to two) earlier-round matches that feed this one — used to
+   * draw the bracket connector lines. Empty for Round-of-32. */
+  feeders: string[];
 };
 
 export type BracketColumn = { round: KnockoutRound; matches: BracketMatch[] };
@@ -240,6 +243,7 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
           status: m.status,
           statusLabel: m.statusLabel,
           row: rowByNum.get(numOf(m)) ?? 0,
+          feeders: feedersOf(m).map((f) => f.id),
         };
       });
     return { round, matches };
