@@ -1,13 +1,11 @@
 import React, { createContext, useContext } from 'react';
-import { useColorScheme } from 'react-native';
-import { darkTheme, lightTheme, Theme } from './theme';
+import { pitchTheme, Theme } from './theme';
 
-const ThemeContext = createContext<Theme>(lightTheme);
+const ThemeContext = createContext<Theme>(pitchTheme);
 
+// Dark-only "Pitch Velocity" — the app ignores the device light/dark setting.
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const scheme = useColorScheme();
-  const theme = scheme === 'dark' ? darkTheme : lightTheme;
-  return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;
+  return <ThemeContext.Provider value={pitchTheme}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme(): Theme {

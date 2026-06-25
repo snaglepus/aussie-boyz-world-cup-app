@@ -14,6 +14,7 @@ import { liveMatches } from '../../src/data/service';
 import { Match } from '../../src/data/types';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
+import { fonts } from '../../src/theme/theme';
 
 export default function LiveScreen() {
   const theme = useTheme();
@@ -123,12 +124,12 @@ function LiveCard({ match }: { match: Match }) {
 const styles = StyleSheet.create({
   body: { paddingHorizontal: 16 },
   section: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 14, marginTop: 14 },
-  sectionTitle: { fontSize: 11, fontWeight: '800', letterSpacing: 0.8, marginBottom: 12 },
+  sectionTitle: { fontSize: 10, fontFamily: fonts.mono, letterSpacing: 0.8, marginBottom: 12 },
   cta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 13, borderRadius: 12, marginTop: 4 },
-  ctaText: { fontSize: 15, fontWeight: '700' },
+  ctaText: { fontSize: 15, fontFamily: fonts.bodyBold },
   loadingBox: { alignItems: 'center', justifyContent: 'center', gap: 12, paddingVertical: 28 },
-  loadingText: { fontSize: 14, fontWeight: '600' },
+  loadingText: { fontSize: 14, fontFamily: fonts.body },
   refreshRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 16 },
-  refreshText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.2 },
-  tapHint: { fontSize: 12, fontWeight: '600', textAlign: 'center', marginTop: 14 },
+  refreshText: { fontSize: 12, fontFamily: fonts.mono, letterSpacing: 0.3 },
+  tapHint: { fontSize: 12, fontFamily: fonts.mono, textAlign: 'center', marginTop: 14 },
 });

@@ -36,7 +36,7 @@ function ScorerLine({ goal, align }: { goal: GoalEvent; align: 'left' | 'right' 
   return (
     <Text
       numberOfLines={1}
-      style={[styles.line, tabularNums, { color: theme.colors.textSecondary, textAlign: align }]}
+      style={[styles.line, tabularNums, { color: theme.colors.textSecondary, textAlign: align, fontFamily: theme.fonts.mono }]}
     >
       {align === 'left' ? `${goal.name}${annotation} ${goal.minute}'` : `${goal.minute}' ${goal.name}${annotation}`}
     </Text>

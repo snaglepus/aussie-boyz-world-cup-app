@@ -25,7 +25,7 @@ export default function Root({ children }: PropsWithChildren) {
 
         <title>{TITLE}</title>
         <meta name="description" content={DESCRIPTION} />
-        <meta name="theme-color" content="#1FA05A" />
+        <meta name="theme-color" content="#0A0F14" />
 
         {/* Home-screen install: real app icon + standalone (no browser chrome). */}
         <link rel="manifest" href={`${BASE}/manifest.json`} />
@@ -55,11 +55,8 @@ export default function Root({ children }: PropsWithChildren) {
   );
 }
 
+// Dark-only "Pitch Velocity": keep the body Pitch-Navy before the bundle mounts,
+// regardless of the device's light/dark preference.
 const BODY_BG = `
-@media (prefers-color-scheme: dark) {
-  body { background-color: #0E1116; }
-}
-@media (prefers-color-scheme: light) {
-  body { background-color: #F6F7F9; }
-}
+  body { background-color: #0A0F14; }
 `;

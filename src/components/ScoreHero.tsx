@@ -23,7 +23,7 @@ export function ScoreHero({ match }: { match: Match }) {
     const body = (
       <>
         <Flag team={team} size={56} />
-        <Text numberOfLines={2} style={[styles.team, { color: theme.colors.text }]}>
+        <Text numberOfLines={2} style={[styles.team, { color: theme.colors.text, fontFamily: theme.fonts.heading }]}>
           {team.name}
         </Text>
       </>
@@ -42,8 +42,8 @@ export function ScoreHero({ match }: { match: Match }) {
         {live ? (
           <LiveBadge label={match.statusLabel} />
         ) : (
-          <Text style={[styles.statusText, { color: theme.colors.textSecondary }]}>
-            {finished ? 'Full time' : formatKickoffTime(match.kickoff ? new Date(match.kickoff) : null)}
+          <Text style={[styles.statusText, { color: theme.colors.textMuted, fontFamily: theme.fonts.mono }]}>
+            {finished ? 'FULL TIME' : formatKickoffTime(match.kickoff ? new Date(match.kickoff) : null)}
           </Text>
         )}
       </View>
@@ -53,20 +53,20 @@ export function ScoreHero({ match }: { match: Match }) {
 
         <View style={styles.center}>
           {showScore ? (
-            <Text style={[styles.score, tabularNums, { color: scoreColor }]}>
+            <Text style={[styles.score, tabularNums, { color: scoreColor, fontFamily: theme.fonts.display }]}>
               {match.homeScore ?? 0}
               <Text style={{ color: theme.colors.textMuted }}> – </Text>
               {match.awayScore ?? 0}
             </Text>
           ) : (
-            <Text style={[styles.vs, { color: theme.colors.textMuted }]}>vs</Text>
+            <Text style={[styles.vs, { color: theme.colors.textMuted, fontFamily: theme.fonts.heading }]}>vs</Text>
           )}
           {match.penalties ? (
-            <Text style={[styles.pens, { color: theme.colors.textSecondary }]}>
+            <Text style={[styles.pens, { color: theme.colors.textSecondary, fontFamily: theme.fonts.mono }]}>
               ({match.penalties.home}–{match.penalties.away} pens)
             </Text>
           ) : match.htScore ? (
-            <Text style={[styles.ht, { color: theme.colors.textMuted }]}>
+            <Text style={[styles.ht, { color: theme.colors.textMuted, fontFamily: theme.fonts.mono }]}>
               HT {match.htScore[0]}–{match.htScore[1]}
             </Text>
           ) : null}
@@ -76,7 +76,7 @@ export function ScoreHero({ match }: { match: Match }) {
       </View>
 
       {match.ground ? (
-        <Text style={[styles.venue, { color: theme.colors.textMuted }]}>
+        <Text style={[styles.venue, { color: theme.colors.textMuted, fontFamily: theme.fonts.mono }]}>
           {match.round}{match.ground ? ` · ${match.ground}` : ''}
         </Text>
       ) : null}

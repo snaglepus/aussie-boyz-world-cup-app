@@ -35,7 +35,7 @@ export function SegmentedControl<T extends string>({
                 styles.label,
                 {
                   color: active ? theme.colors.onAccent : theme.colors.textSecondary,
-                  fontWeight: active ? '800' : '600',
+                  fontFamily: active ? theme.fonts.bodyBold : theme.fonts.bodyMedium,
                 },
               ]}
             >
@@ -51,15 +51,15 @@ export function SegmentedControl<T extends string>({
 const styles = StyleSheet.create({
   track: {
     flexDirection: 'row',
-    padding: 3,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    gap: 3,
+    padding: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    gap: 4,
   },
   segment: {
     flex: 1,
-    paddingVertical: 8,
-    borderRadius: 9,
+    paddingVertical: 9,
+    borderRadius: 999,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },

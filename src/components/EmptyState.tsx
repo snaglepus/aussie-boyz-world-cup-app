@@ -18,8 +18,8 @@ export function EmptyState({
       <View style={[styles.iconWrap, { backgroundColor: theme.colors.accentSoft }]}>
         <Ionicons name={icon} size={30} color={theme.colors.accent} />
       </View>
-      <Text style={[styles.title, { color: theme.colors.text }]}>{title}</Text>
-      {message ? <Text style={[styles.message, { color: theme.colors.textSecondary }]}>{message}</Text> : null}
+      <Text style={[styles.title, { color: theme.colors.text, fontFamily: theme.fonts.heading }]}>{title}</Text>
+      {message ? <Text style={[styles.message, { color: theme.colors.textSecondary, fontFamily: theme.fonts.body }]}>{message}</Text> : null}
     </View>
   );
 }

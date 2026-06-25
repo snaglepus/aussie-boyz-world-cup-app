@@ -42,19 +42,19 @@ export function MatchRow({ match }: { match: Match }) {
       <View style={styles.right}>
         {showScore ? (
           <View style={styles.scoreCol}>
-            <Text style={[styles.score, tabularNums, { color: scoreColor }]}>{match.homeScore ?? 0}</Text>
-            <Text style={[styles.score, tabularNums, { color: scoreColor }]}>{match.awayScore ?? 0}</Text>
+            <Text style={[styles.score, tabularNums, { color: scoreColor, fontFamily: theme.fonts.display }]}>{match.homeScore ?? 0}</Text>
+            <Text style={[styles.score, tabularNums, { color: scoreColor, fontFamily: theme.fonts.display }]}>{match.awayScore ?? 0}</Text>
           </View>
         ) : (
-          <Text style={[styles.kickoff, tabularNums, { color: theme.colors.textSecondary }]}>
+          <Text style={[styles.kickoff, tabularNums, { color: theme.colors.textSecondary, fontFamily: theme.fonts.mono }]}>
             {formatKickoffTime(match.kickoff ? new Date(match.kickoff) : null) || 'TBD'}
           </Text>
         )}
         <View style={styles.statusCol}>
           {live ? (
-            <Text style={[styles.liveLabel, { color: theme.colors.live }]}>{match.statusLabel}</Text>
+            <Text style={[styles.liveLabel, { color: theme.colors.live, fontFamily: theme.fonts.monoBold }]}>{match.statusLabel}</Text>
           ) : finished ? (
-            <Text style={[styles.ftLabel, { color: theme.colors.textMuted }]}>FT</Text>
+            <Text style={[styles.ftLabel, { color: theme.colors.textMuted, fontFamily: theme.fonts.mono }]}>FT</Text>
           ) : null}
           <Ionicons name="chevron-forward" size={16} color={theme.colors.textMuted} />
         </View>
@@ -70,7 +70,7 @@ function TeamLine({ name, flag, muted }: { name: string; flag: React.ReactNode; 
       {flag}
       <Text
         numberOfLines={1}
-        style={[styles.teamName, { color: muted ? theme.colors.textMuted : theme.colors.text }]}
+        style={[styles.teamName, { color: muted ? theme.colors.textMuted : theme.colors.text, fontFamily: theme.fonts.bodyBold }]}
       >
         {name}
       </Text>

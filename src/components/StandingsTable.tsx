@@ -25,8 +25,13 @@ export function StandingsTable({
 
   return (
     <View style={styles.block}>
-      <Text style={[styles.groupTitle, { color: theme.colors.text }]}>{table.group}</Text>
-      <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.hairline }]}>
+      <View style={styles.titleRow}>
+        <View style={[styles.titleBar, { backgroundColor: theme.colors.accent }]} />
+        <Text style={[styles.groupTitle, { color: theme.colors.text, fontFamily: theme.fonts.heading }]}>
+          {table.group}
+        </Text>
+      </View>
+      <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.glassBorder }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View>
             <Header />
@@ -55,16 +60,16 @@ function Header() {
       style={[
         styles.head,
         tabularNums,
-        { width, color: bold ? theme.colors.text : theme.colors.textMuted, fontWeight: bold ? '700' : '600' },
+        { width, color: bold ? theme.colors.textSecondary : theme.colors.textMuted, fontFamily: theme.fonts.mono },
       ]}
     >
-      {label}
+      {label.toUpperCase()}
     </Text>
   );
   return (
     <View style={[styles.row, styles.headerRow, { borderColor: theme.colors.hairline }]}>
       <Text style={[styles.head, { width: COL.pos }]} />
-      <Text style={[styles.head, { width: COL.team, textAlign: 'left', color: theme.colors.textMuted }]}>Team</Text>
+      <Text style={[styles.head, { width: COL.team, textAlign: 'left', color: theme.colors.textMuted, fontFamily: theme.fonts.mono }]}>TEAM</Text>
       {cell('MP', COL.stat)}
       {cell('W', COL.stat)}
       {cell('D', COL.stat)}
@@ -73,7 +78,7 @@ function Header() {
       {cell('GF', COL.stat)}
       {cell('GA', COL.stat)}
       {cell('GD', COL.gd)}
-      <Text style={[styles.head, { width: COL.form, textAlign: 'center', color: theme.colors.textMuted }]}>Last 5</Text>
+      <Text style={[styles.head, { width: COL.form, textAlign: 'center', color: theme.colors.textMuted, fontFamily: theme.fonts.mono }]}>LAST 5</Text>
     </View>
   );
 }
@@ -100,15 +105,23 @@ function Row({
   const accent =
     position <= 2 ? theme.colors.accent : bestThird ? theme.colors.gold : 'transparent';
 
-  const stat = (value: number, width: number, bold = false, signed = false) => (
+  const ptsColor = position <= 2 ? theme.colors.accent : bestThird ? theme.colors.gold : theme.colors.text;
+  const gdColor = (v: number) =>
+    v > 0 ? theme.colors.accentDim : v < 0 ? theme.colors.loss : theme.colors.textMuted;
+
+  const stat = (value: number, width: number, opts?: { color?: string; strong?: boolean; signed?: boolean }) => (
     <Text
       style={[
         styles.cell,
         tabularNums,
-        { width, color: bold ? theme.colors.text : theme.colors.textSecondary, fontWeight: bold ? '800' : '600' },
+        {
+          width,
+          color: opts?.color ?? theme.colors.textSecondary,
+          fontFamily: opts?.strong ? theme.fonts.monoBold : theme.fonts.mono,
+        },
       ]}
     >
-      {signed && value > 0 ? `+${value}` : value}
+      {opts?.signed && value > 0 ? `+${value}` : value}
     </Text>
   );
 
@@ -121,15 +134,17 @@ function Row({
     >
       <View style={[styles.posWrap, { width: COL.pos }]}>
         <View style={[styles.posBar, { backgroundColor: accent }]} />
-        <Text style={[styles.pos, tabularNums, { color: theme.colors.textSecondary }]}>{position}</Text>
+        <Text style={[styles.pos, tabularNums, { color: position <= 2 ? theme.colors.accent : bestThird ? theme.colors.gold : theme.colors.textMuted, fontFamily: theme.fonts.monoBold }]}>
+          {position}
+        </Text>
       </View>
       <Pressable
         style={[styles.teamCell, { width: COL.team }]}
         onPress={() => router.navigate(teamHref(row.team))}
         hitSlop={4}
       >
-        <Flag team={row.team} size={22} />
-        <Text numberOfLines={1} style={[styles.teamName, { color: theme.colors.text }]}>
+        <Flag team={row.team} size={24} />
+        <Text numberOfLines={1} style={[styles.teamName, { color: theme.colors.text, fontFamily: theme.fonts.bodyBold }]}>
           {row.team.name}
         </Text>
         {confidence != null ? (
@@ -139,7 +154,7 @@ function Row({
               { backgroundColor: bestThird ? theme.colors.gold : theme.colors.surfaceAlt },
             ]}
           >
-            <Text style={[styles.confText, { color: bestThird ? '#11151C' : theme.colors.textMuted }]}>
+            <Text style={[styles.confText, { color: bestThird ? '#11151C' : theme.colors.textMuted, fontFamily: theme.fonts.monoBold }]}>
               {confidence}%
             </Text>
           </View>
@@ -149,10 +164,10 @@ function Row({
       {stat(row.w, COL.stat)}
       {stat(row.d, COL.stat)}
       {stat(row.l, COL.stat)}
-      {stat(row.pts, COL.pts, true)}
+      {stat(row.pts, COL.pts, { color: ptsColor, strong: true })}
       {stat(row.gf, COL.stat)}
       {stat(row.ga, COL.stat)}
-      {stat(row.gd, COL.gd, false, true)}
+      {stat(row.gd, COL.gd, { color: gdColor(row.gd), signed: true })}
       <View style={[styles.formCell, { width: COL.form }]}>
         <FormPills form={row.form} />
       </View>
@@ -162,18 +177,20 @@ function Row({
 
 const styles = StyleSheet.create({
   block: { marginBottom: 22 },
-  groupTitle: { fontSize: 18, fontWeight: '800', marginBottom: 10, marginLeft: 2 },
-  card: { borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 10, marginLeft: 2 },
+  titleBar: { width: 5, height: 22, borderRadius: 3 },
+  groupTitle: { fontSize: 20, letterSpacing: -0.3 },
+  card: { borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', height: 50, paddingRight: 12 },
-  headerRow: { height: 38, borderBottomWidth: StyleSheet.hairlineWidth },
-  head: { fontSize: 12, textAlign: 'center' },
-  cell: { fontSize: 14, textAlign: 'center' },
+  headerRow: { height: 36, borderBottomWidth: StyleSheet.hairlineWidth },
+  head: { fontSize: 10, textAlign: 'center', letterSpacing: 0.6 },
+  cell: { fontSize: 13, textAlign: 'center' },
   posWrap: { flexDirection: 'row', alignItems: 'center', height: '100%' },
   posBar: { width: 3, height: '64%', borderRadius: 2, marginRight: 6 },
-  pos: { fontSize: 13, fontWeight: '700', width: 14 },
+  pos: { fontSize: 13, width: 14 },
   teamCell: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 2 },
-  teamName: { fontSize: 14, fontWeight: '600', flexShrink: 1 },
+  teamName: { fontSize: 14, flexShrink: 1 },
   confPill: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 },
-  confText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.2 },
+  confText: { fontSize: 10, letterSpacing: 0.2 },
   formCell: { alignItems: 'center', justifyContent: 'center', paddingLeft: 8 },
 });

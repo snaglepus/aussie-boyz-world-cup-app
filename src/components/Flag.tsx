@@ -13,7 +13,8 @@ export function Flag({ team, size = 26 }: { team: TeamRef; size?: number }) {
   const theme = useTheme();
   const [failed, setFailed] = useState(false);
   const url = flagUrl(team, size <= 28 ? 40 : 80);
-  const height = Math.round(size * 0.72);
+  // "Pitch Velocity" uses circular team flags (the wide flag is centre-cropped).
+  const radius = size / 2;
 
   if (!url || failed) {
     return (
@@ -22,14 +23,17 @@ export function Flag({ team, size = 26 }: { team: TeamRef; size?: number }) {
           styles.fallback,
           {
             width: size,
-            height,
-            borderRadius: 4,
+            height: size,
+            borderRadius: radius,
             backgroundColor: theme.colors.surfaceAlt,
             borderColor: theme.colors.border,
           },
         ]}
       >
-        <Text style={[styles.fallbackText, { color: theme.colors.textMuted }]} numberOfLines={1}>
+        <Text
+          style={[styles.fallbackText, { color: theme.colors.textMuted, fontFamily: theme.fonts.mono }]}
+          numberOfLines={1}
+        >
           {team.isPlaceholder ? '?' : team.code.slice(0, 3)}
         </Text>
       </View>
@@ -42,8 +46,8 @@ export function Flag({ team, size = 26 }: { team: TeamRef; size?: number }) {
       onError={() => setFailed(true)}
       style={{
         width: size,
-        height,
-        borderRadius: 4,
+        height: size,
+        borderRadius: radius,
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: theme.colors.border,
         backgroundColor: theme.colors.surfaceAlt,
@@ -59,5 +63,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth,
   },
-  fallbackText: { fontSize: 9, fontWeight: '700' },
+  fallbackText: { fontSize: 8, fontWeight: '700', letterSpacing: 0.2 },
 });

@@ -34,17 +34,17 @@ export function TitleFavourites() {
           {top.map((o, i) => (
             <View
               key={o.team.code + o.team.name}
-              style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.hairline }]}
+              style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.glassBorder }]}
             >
-              <Text style={[styles.rank, { color: theme.colors.textMuted }]}>#{i + 1}</Text>
+              <Text style={[styles.rank, { color: theme.colors.textMuted, fontFamily: theme.fonts.mono }]}>#{i + 1}</Text>
               <Flag team={o.team} size={30} />
-              <Text numberOfLines={1} style={[styles.team, { color: theme.colors.text }]}>
+              <Text numberOfLines={1} style={[styles.team, { color: theme.colors.text, fontFamily: theme.fonts.bodyBold }]}>
                 {o.team.name}
               </Text>
-              <Text style={[styles.odds, tabularNums, { color: theme.colors.accent }]}>
+              <Text style={[styles.odds, tabularNums, { color: theme.colors.accent, fontFamily: theme.fonts.monoBold }]}>
                 ${o.decimal.toFixed(2)}
               </Text>
-              <Text style={[styles.pct, tabularNums, { color: theme.colors.textSecondary }]}>
+              <Text style={[styles.pct, tabularNums, { color: theme.colors.textSecondary, fontFamily: theme.fonts.mono }]}>
                 {o.impliedPct.toFixed(1)}%
               </Text>
             </View>
@@ -52,7 +52,7 @@ export function TitleFavourites() {
         </ScrollView>
       )}
 
-      <Text style={[styles.caption, { color: theme.colors.textMuted }]}>
+      <Text style={[styles.caption, { color: theme.colors.textMuted, fontFamily: theme.fonts.mono }]}>
         Decimal odds · win chance · via The Odds API
       </Text>
     </View>

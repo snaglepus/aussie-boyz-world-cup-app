@@ -25,7 +25,7 @@ export function TeamLabel({
       numberOfLines={1}
       style={[
         styles.name,
-        { color, fontWeight: bold ? '700' : '600', textAlign: align },
+        { color, fontFamily: bold ? theme.fonts.bodyBold : theme.fonts.bodyMedium, textAlign: align },
       ]}
     >
       {team.name}

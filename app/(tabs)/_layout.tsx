@@ -26,49 +26,59 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: theme.colors.textMuted,
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
-          borderTopColor: theme.colors.hairline,
-          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: theme.colors.glassBorder,
+          borderTopWidth: 1,
           height: 56 + bottomPad,
           paddingBottom: bottomPad,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
+        tabBarLabelStyle: { fontSize: 10, fontFamily: theme.fonts.mono, letterSpacing: 0.3 },
       }}
     >
       <Tabs.Screen
         name="live"
         options={{
           title: 'Live',
-          tabBarIcon: ({ color, size }) => <Ionicons name="radio-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'radio' : 'radio-outline'} size={size} color={color} />
+          ),
           tabBarBadge: liveCount > 0 ? liveCount : undefined,
-          tabBarBadgeStyle: { backgroundColor: theme.colors.live, fontSize: 10 },
+          tabBarBadgeStyle: { backgroundColor: theme.colors.live, color: '#fff', fontSize: 10 },
         }}
       />
       <Tabs.Screen
         name="matches"
         options={{
           title: 'Matches',
-          tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="knockout"
         options={{
           title: 'Knockout',
-          tabBarIcon: ({ color, size }) => <Ionicons name="git-network-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'git-network' : 'git-network-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="table"
         options={{
           title: 'Groups',
-          tabBarIcon: ({ color, size }) => <Ionicons name="list-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'list' : 'list-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="teams"
         options={{
           title: 'Teams',
-          tabBarIcon: ({ color, size }) => <Ionicons name="people-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'people' : 'people-outline'} size={size} color={color} />
+          ),
         }}
       />
     </Tabs>
