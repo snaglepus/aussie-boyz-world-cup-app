@@ -6,8 +6,8 @@
   "scope": "/aussie-boyz-world-cup-app/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#1FA05A",
-  "theme_color": "#1FA05A",
+  "background_color": "#0A0F14",
+  "theme_color": "#0A0F14",
   "icons": [
     {
       "src": "/aussie-boyz-world-cup-app/icons/icon-192.png",

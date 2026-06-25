@@ -20,9 +20,9 @@ export function LiveBadge({ label }: { label: string }) {
   }, [pulse]);
 
   return (
-    <View style={[styles.wrap, { backgroundColor: theme.dark ? 'rgba(239,68,68,0.16)' : 'rgba(239,68,68,0.10)' }]}>
+    <View style={[styles.wrap, { backgroundColor: 'rgba(255,59,48,0.16)' }]}>
       <Animated.View style={[styles.dot, { backgroundColor: theme.colors.live, opacity: pulse }]} />
-      <Text style={[styles.text, tabularNums, { color: theme.colors.live }]}>{label}</Text>
+      <Text style={[styles.text, tabularNums, { color: theme.colors.live, fontFamily: theme.fonts.monoBold }]}>{label}</Text>
     </View>
   );
 }

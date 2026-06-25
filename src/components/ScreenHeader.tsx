@@ -16,8 +16,15 @@ export function ScreenHeader({
   return (
     <View style={styles.wrap}>
       <View style={{ flex: 1 }}>
-        <Text style={[styles.title, { color: theme.colors.text }]}>{title}</Text>
-        {subtitle ? <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>{subtitle}</Text> : null}
+        <Text style={[styles.brand, { color: theme.colors.accentDim, fontFamily: theme.fonts.mono }]}>
+          AUSSIE BOYZ 2026
+        </Text>
+        <Text style={[styles.title, { color: theme.colors.text, fontFamily: theme.fonts.display }]}>{title}</Text>
+        {subtitle ? (
+          <Text style={[styles.subtitle, { color: theme.colors.textSecondary, fontFamily: theme.fonts.bodyMedium }]}>
+            {subtitle}
+          </Text>
+        ) : null}
       </View>
       {right}
     </View>
@@ -25,7 +32,8 @@ export function ScreenHeader({
 }
 
 const styles = StyleSheet.create({
-  wrap: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
-  title: { fontSize: 30, fontWeight: '900', letterSpacing: -0.6 },
-  subtitle: { fontSize: 13, fontWeight: '600', marginTop: 2 },
+  wrap: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 16, paddingTop: 10, paddingBottom: 12 },
+  brand: { fontSize: 10, letterSpacing: 1.5, marginBottom: 4 },
+  title: { fontSize: 32, letterSpacing: -0.5 },
+  subtitle: { fontSize: 13, marginTop: 3 },
 });

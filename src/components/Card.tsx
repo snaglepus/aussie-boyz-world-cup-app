@@ -14,14 +14,18 @@ export function Card({
 }) {
   const theme = useTheme();
   return (
-    <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.hairline }, style]}>
-      {title ? <Text style={[styles.title, { color: theme.colors.textSecondary }]}>{title.toUpperCase()}</Text> : null}
+    <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.glassBorder }, style]}>
+      {title ? (
+        <Text style={[styles.title, { color: theme.colors.textMuted, fontFamily: theme.fonts.mono }]}>
+          {title.toUpperCase()}
+        </Text>
+      ) : null}
       {children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, padding: 16, marginBottom: 14 },
-  title: { fontSize: 11, fontWeight: '800', letterSpacing: 0.8, marginBottom: 12 },
+  card: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 14 },
+  title: { fontSize: 11, letterSpacing: 1, marginBottom: 12 },
 });

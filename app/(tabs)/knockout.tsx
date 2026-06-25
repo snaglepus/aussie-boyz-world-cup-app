@@ -10,6 +10,7 @@ import { SkeletonBlock } from '../../src/components/Skeleton';
 import { useTitleOdds } from '../../src/hooks/useTitleOdds';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
+import { fonts } from '../../src/theme/theme';
 import { BracketMatch, Side, buildBracket } from '../../src/utils/bracket';
 
 const CARD_W = 158;
@@ -148,7 +149,7 @@ function SideRow({ side, score }: { side: Side; score: number | null }) {
       ) : (
         <View style={[styles.tbdDot, { backgroundColor: theme.colors.surfaceAlt, borderColor: theme.colors.border }]} />
       )}
-      <Text numberOfLines={1} style={[styles.sideName, { color, fontWeight: confirmed ? '800' : '600' }]}>
+      <Text numberOfLines={1} style={[styles.sideName, { color, fontFamily: confirmed ? fonts.bodyBold : fonts.bodyMedium }]}>
         {side.label}
       </Text>
       {confirmed ? (
@@ -175,18 +176,18 @@ function city(ground: string): string {
 const styles = StyleSheet.create({
   banner: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginHorizontal: 16, marginBottom: 8, padding: 10, borderRadius: 10 },
   bannerBody: { flex: 1, gap: 5 },
-  bannerText: { fontSize: 12, fontWeight: '700' },
+  bannerText: { fontSize: 12, fontFamily: fonts.bodyMedium },
   legendRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  legendText: { fontSize: 11, fontWeight: '700' },
+  legendText: { fontSize: 11, fontFamily: fonts.mono },
   loading: { padding: 16 },
   labelRow: { flexDirection: 'row', height: LABEL_H, paddingTop: 4 },
-  roundLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 0.2 },
+  roundLabel: { fontSize: 11, fontFamily: fonts.heading, letterSpacing: 0.2 },
   cardWrap: { position: 'absolute', width: CARD_W, height: CARD_H },
   card: { height: CARD_H, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 10, paddingVertical: 8, justifyContent: 'center', gap: 5 },
-  meta: { fontSize: 10, fontWeight: '600', marginBottom: 1 },
+  meta: { fontSize: 10, fontFamily: fonts.mono, marginBottom: 1 },
   side: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   tbdDot: { width: 18, height: 13, borderRadius: 3, borderWidth: StyleSheet.hairlineWidth },
   sideName: { fontSize: 12.5, flex: 1 },
   tick: { marginLeft: -2 },
-  score: { fontSize: 13, fontWeight: '800', minWidth: 12, textAlign: 'right' },
+  score: { fontSize: 13, fontFamily: fonts.monoBold, minWidth: 12, textAlign: 'right' },
 });

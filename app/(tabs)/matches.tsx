@@ -13,6 +13,7 @@ import { liveMatches, playedMatches, upcomingMatches } from '../../src/data/serv
 import { Match } from '../../src/data/types';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
+import { fonts } from '../../src/theme/theme';
 import { formatMatchDay } from '../../src/utils/time';
 
 type Filter = 'upcoming' | 'played';
@@ -151,12 +152,12 @@ function groupByDay(matches: Match[], _played: boolean): { title: string; data: 
 const styles = StyleSheet.create({
   controls: { paddingHorizontal: 16, paddingBottom: 12 },
   body: { paddingHorizontal: 16, paddingBottom: 32 },
-  dayHeader: { fontSize: 13, fontWeight: '800', paddingVertical: 8, letterSpacing: 0.2 },
+  dayHeader: { fontSize: 11, fontFamily: fonts.mono, paddingVertical: 8, letterSpacing: 0.6 },
   bannerWrap: { paddingHorizontal: 16, paddingBottom: 10 },
   bannerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 12 },
-  bannerText: { fontSize: 13, fontWeight: '700', flex: 1 },
+  bannerText: { fontSize: 13, fontFamily: fonts.bodyBold, flex: 1 },
   chip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth },
-  chipText: { fontSize: 11, fontWeight: '700' },
+  chipText: { fontSize: 11, fontFamily: fonts.mono },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   globeBtn: {
     width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center',

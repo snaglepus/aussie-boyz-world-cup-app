@@ -24,10 +24,10 @@ export function PlayoffList({ bands }: { bands: PlayoffBand[] }) {
             <View style={styles.bandHeader}>
               <View style={[styles.bandBar, { backgroundColor: accent }]} />
               <View style={{ flex: 1 }}>
-                <Text style={[styles.bandLabel, { color: theme.colors.text }]}>{band.label}</Text>
-                <Text style={[styles.bandSub, { color: theme.colors.textMuted }]}>{band.sublabel}</Text>
+                <Text style={[styles.bandLabel, { color: theme.colors.text, fontFamily: theme.fonts.heading }]}>{band.label}</Text>
+                <Text style={[styles.bandSub, { color: theme.colors.textMuted, fontFamily: theme.fonts.mono }]}>{band.sublabel}</Text>
               </View>
-              <Text style={[styles.bandCount, { color: theme.colors.textMuted }]}>{band.rows.length}</Text>
+              <Text style={[styles.bandCount, { color: theme.colors.textMuted, fontFamily: theme.fonts.monoBold }]}>{band.rows.length}</Text>
             </View>
 
             <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.hairline }]}>
@@ -57,16 +57,16 @@ function Row({ row, accent, last }: { row: PlayoffRow; accent: string; last: boo
       ]}
     >
       <View style={[styles.rankBar, { backgroundColor: accent }]} />
-      <Text style={[styles.rank, tabularNums, { color: theme.colors.textSecondary }]}>{row.rank}</Text>
+      <Text style={[styles.rank, tabularNums, { color: theme.colors.textSecondary, fontFamily: theme.fonts.monoBold }]}>{row.rank}</Text>
       <View style={[styles.grpChip, { backgroundColor: theme.colors.surfaceAlt, borderColor: theme.colors.border }]}>
-        <Text style={[styles.grpText, { color: theme.colors.textSecondary }]}>{row.group}</Text>
+        <Text style={[styles.grpText, { color: theme.colors.textSecondary, fontFamily: theme.fonts.monoBold }]}>{row.group}</Text>
       </View>
-      <Flag team={row.team} size={20} />
-      <Text numberOfLines={1} style={[styles.name, { color: theme.colors.text }]}>
+      <Flag team={row.team} size={22} />
+      <Text numberOfLines={1} style={[styles.name, { color: theme.colors.text, fontFamily: theme.fonts.bodyBold }]}>
         {row.team.name}
       </Text>
       <ClinchBadge clinch={row.clinch} />
-      <Text style={[styles.pts, tabularNums, { color: theme.colors.text }]}>{row.pts}</Text>
+      <Text style={[styles.pts, tabularNums, { color: theme.colors.text, fontFamily: theme.fonts.monoBold }]}>{row.pts}</Text>
     </Pressable>
   );
 }
@@ -90,7 +90,7 @@ function ClinchBadge({ clinch }: { clinch: Clinch }) {
         },
       ]}
     >
-      <Text style={[styles.badgeText, { color: map.fg }]}>{map.label}</Text>
+      <Text style={[styles.badgeText, { color: map.fg, fontFamily: theme.fonts.monoBold }]}>{map.label}</Text>
     </View>
   );
 }

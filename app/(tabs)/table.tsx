@@ -11,6 +11,7 @@ import { TitleFavourites } from '../../src/components/TitleFavourites';
 import { GroupTable } from '../../src/data/types';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
+import { fonts } from '../../src/theme/theme';
 import { buildPlayoffPicture } from '../../src/utils/playoffRanking';
 import { assessThirdPlaced } from '../../src/utils/standings';
 
@@ -94,10 +95,10 @@ function Legend({ confidence }: { confidence: number }) {
 
 const styles = StyleSheet.create({
   controls: { paddingHorizontal: 16, paddingBottom: 12 },
-  note: { fontSize: 12, fontWeight: '600', lineHeight: 17, marginBottom: 16, marginLeft: 2 },
+  note: { fontSize: 12, fontFamily: fonts.mono, lineHeight: 18, marginBottom: 16, marginLeft: 2 },
   body: { paddingHorizontal: 16, paddingBottom: 32, paddingTop: 4 },
   legend: { flexDirection: 'row', gap: 18, marginBottom: 18, marginLeft: 2 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   dot: { width: 10, height: 10, borderRadius: 3 },
-  legendText: { fontSize: 12, fontWeight: '600' },
+  legendText: { fontSize: 12, fontFamily: fonts.bodyMedium },
 });

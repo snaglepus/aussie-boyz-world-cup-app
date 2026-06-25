@@ -14,6 +14,7 @@ import { useMatchStats } from '../../src/hooks/useMatchStats';
 import { useTitleOdds } from '../../src/hooks/useTitleOdds';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
+import { fonts } from '../../src/theme/theme';
 import { buildBracket } from '../../src/utils/bracket';
 import { formatMatchDay } from '../../src/utils/time';
 
@@ -137,7 +138,7 @@ const styles = StyleSheet.create({
   body: { padding: 16, paddingBottom: 40 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
-  infoText: { fontSize: 15, fontWeight: '600', flex: 1 },
+  infoText: { fontSize: 15, fontFamily: fonts.bodyMedium, flex: 1 },
   estChip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 10, borderRadius: 10, marginTop: 4 },
-  estText: { fontSize: 12, fontWeight: '700' },
+  estText: { fontSize: 12, fontFamily: fonts.mono },
 });

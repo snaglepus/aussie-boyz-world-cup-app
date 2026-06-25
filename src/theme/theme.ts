@@ -1,39 +1,52 @@
 /**
- * Design tokens for the Aussie Boyz World Cup app.
+ * Design tokens for the Aussie Boyz World Cup app — "Pitch Velocity".
  *
- * Philosophy (from UX research): one brand accent, one reserved "live" colour,
- * an otherwise near-neutral palette, generous spacing, tabular figures for all
- * numbers. Dark surfaces are dark grey (never pure black) with elevation shown
- * through progressively lighter greys; accents are slightly desaturated in dark.
+ * A dark "Dark Pitch" system: deep Pitch-Navy backgrounds, charcoal glass
+ * cards, and a single Electric-Lime accent used sparingly for live indicators,
+ * highlights and calls-to-action. Numbers and micro-labels use a monospace
+ * face for a precise, broadcast-data feel; headlines use a muscular display
+ * face. The app is dark-only.
  */
 
 const palette = {
-  // Brand — a fresh green/gold nod to the "Aussie Boyz" name.
-  green: '#1FA05A',
-  greenDark: '#39B26E',
-  gold: '#F4C20D',
-  // Reserved live / alert colour. Never reused for anything else.
-  live: '#EF4444',
-  liveDark: '#F87171',
-  // Semantic
-  win: '#1FA05A',
-  draw: '#9AA3AF',
-  loss: '#EF4444',
+  lime: '#CAF300', // Electric Lime — primary accent
+  limeDim: '#B0D500', // slightly calmer lime for secondary highlights
+  onLime: '#171E00', // near-black text that sits on lime fills
+  gold: '#FFD700', // score / wildcard gold
+  purple: '#8B5CF6', // stat comparison (away side)
+  live: '#FF3B30', // reserved live / alert red
+  navy: '#0A0F14', // page background (level 0)
+  charcoal: '#161C24', // cards / containers (level 1)
+};
+
+/** Brand font families (loaded in app/_layout.tsx via expo-google-fonts). */
+export const fonts = {
+  brand: 'Anybody_900Black_Italic', // wordmark
+  display: 'Anybody_800ExtraBold', // big titles / scores
+  heading: 'Anybody_700Bold', // section + group headings
+  body: 'HankenGrotesk_400Regular',
+  bodyMedium: 'HankenGrotesk_500Medium',
+  bodyBold: 'HankenGrotesk_700Bold',
+  mono: 'JetBrainsMono_500Medium', // numbers, minutes, micro-labels
+  monoBold: 'JetBrainsMono_700Bold',
 };
 
 export type Theme = {
   dark: boolean;
   colors: {
     accent: string;
+    accentDim: string;
     accentSoft: string;
     gold: string;
     live: string;
+    statPurple: string;
     bg: string;
     surface: string;
     surfaceAlt: string;
     elevated: string;
     border: string;
     hairline: string;
+    glassBorder: string;
     text: string;
     textSecondary: string;
     textMuted: string;
@@ -45,6 +58,7 @@ export type Theme = {
     playoff: string; // best-third band
     skeleton: string;
   };
+  fonts: typeof fonts;
   spacing: (n: number) => number;
   radius: { sm: number; md: number; lg: number; pill: number };
   font: {
@@ -67,66 +81,45 @@ const font = {
   emphasis: 17,
   title: 20,
   heading: 26,
-  hero: 48,
+  hero: 44,
 };
 
-export const lightTheme: Theme = {
-  dark: false,
-  colors: {
-    accent: palette.green,
-    accentSoft: 'rgba(31,160,90,0.12)',
-    gold: palette.gold,
-    live: palette.live,
-    bg: '#F6F7F9',
-    surface: '#FFFFFF',
-    surfaceAlt: '#FBFCFD',
-    elevated: '#FFFFFF',
-    border: '#E5E8EC',
-    hairline: '#EDEFF2',
-    text: '#11151C',
-    textSecondary: '#566072',
-    textMuted: '#8A93A2',
-    onAccent: '#FFFFFF',
-    win: palette.win,
-    draw: palette.draw,
-    loss: palette.loss,
-    qualify: 'rgba(31,160,90,0.16)',
-    playoff: 'rgba(244,194,13,0.18)',
-    skeleton: '#E9ECF0',
-  },
-  spacing,
-  radius,
-  font,
-};
-
-export const darkTheme: Theme = {
+export const pitchTheme: Theme = {
   dark: true,
   colors: {
-    accent: palette.greenDark,
-    accentSoft: 'rgba(57,178,110,0.16)',
+    accent: palette.lime,
+    accentDim: palette.limeDim,
+    accentSoft: 'rgba(202,243,0,0.10)',
     gold: palette.gold,
-    live: palette.liveDark,
-    bg: '#0E1116',
-    surface: '#151A21',
-    surfaceAlt: '#1A2129',
-    elevated: '#1C232C',
-    border: '#262E39',
-    hairline: '#222932',
-    text: '#E6E8EB',
-    textSecondary: '#A7B0BD',
-    textMuted: '#6F7A88',
-    onAccent: '#06130C',
-    win: palette.greenDark,
+    live: palette.live,
+    statPurple: palette.purple,
+    bg: palette.navy,
+    surface: palette.charcoal,
+    surfaceAlt: '#1C2530',
+    elevated: '#202B38',
+    border: 'rgba(255,255,255,0.10)',
+    hairline: 'rgba(255,255,255,0.07)',
+    glassBorder: 'rgba(202,243,0,0.12)',
+    text: '#E6EAD9',
+    textSecondary: '#C5C9AC',
+    textMuted: '#8F9378',
+    onAccent: palette.onLime,
+    win: palette.lime,
     draw: '#7C8593',
-    loss: palette.liveDark,
-    qualify: 'rgba(57,178,110,0.20)',
-    playoff: 'rgba(244,194,13,0.16)',
-    skeleton: '#202833',
+    loss: palette.live,
+    qualify: 'rgba(202,243,0,0.07)',
+    playoff: 'rgba(255,215,0,0.10)',
+    skeleton: '#1C2530',
   },
+  fonts,
   spacing,
   radius,
   font,
 };
+
+// Dark-only: both exports resolve to Pitch Velocity so existing imports keep working.
+export const darkTheme = pitchTheme;
+export const lightTheme = pitchTheme;
 
 /** Tabular figures keep digits from shifting in scores, clocks and tables. */
 export const tabularNums = { fontVariant: ['tabular-nums' as const] };

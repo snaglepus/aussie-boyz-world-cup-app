@@ -20,16 +20,16 @@ export function StatBars({ stats }: { stats: MatchStats[] }) {
         return (
           <View key={s.label} style={styles.statBlock}>
             <View style={styles.labels}>
-              <Text style={[styles.value, tabularNums, { color: theme.colors.text }]}>{fmt(s.home)}</Text>
-              <Text style={[styles.label, { color: theme.colors.textSecondary }]}>{s.label}</Text>
-              <Text style={[styles.value, tabularNums, { color: theme.colors.text }]}>{fmt(s.away)}</Text>
+              <Text style={[styles.value, tabularNums, { color: theme.colors.accent, fontFamily: theme.fonts.monoBold }]}>{fmt(s.home)}</Text>
+              <Text style={[styles.label, { color: theme.colors.textSecondary, fontFamily: theme.fonts.mono }]}>{s.label}</Text>
+              <Text style={[styles.value, styles.valueRight, tabularNums, { color: theme.colors.statPurple, fontFamily: theme.fonts.monoBold }]}>{fmt(s.away)}</Text>
             </View>
             <View style={styles.barRow}>
               <View style={styles.barSideLeft}>
                 <View style={[styles.fill, styles.fillLeft, { width: `${homePct}%`, backgroundColor: theme.colors.accent }]} />
               </View>
               <View style={styles.barSideRight}>
-                <View style={[styles.fill, styles.fillRight, { width: `${awayPct}%`, backgroundColor: theme.colors.textMuted }]} />
+                <View style={[styles.fill, styles.fillRight, { width: `${awayPct}%`, backgroundColor: theme.colors.statPurple }]} />
               </View>
             </View>
           </View>
@@ -43,8 +43,9 @@ const styles = StyleSheet.create({
   wrap: { gap: 14, paddingTop: 4 },
   statBlock: { gap: 6 },
   labels: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  label: { fontSize: 13, fontWeight: '600' },
-  value: { fontSize: 14, fontWeight: '800', minWidth: 44 },
+  label: { fontSize: 12, letterSpacing: 0.3 },
+  value: { fontSize: 14, minWidth: 44 },
+  valueRight: { textAlign: 'right' },
   barRow: { flexDirection: 'row', gap: 4, height: 6 },
   barSideLeft: { flex: 1, alignItems: 'flex-end' },
   barSideRight: { flex: 1, alignItems: 'flex-start' },

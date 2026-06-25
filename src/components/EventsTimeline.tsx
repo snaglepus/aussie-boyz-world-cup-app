@@ -3,7 +3,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Match } from '../data/types';
 import { useTheme } from '../theme/ThemeProvider';
-import { tabularNums } from '../theme/theme';
+import { fonts, tabularNums } from '../theme/theme';
 
 type TimelineItem = {
   minute: string;
@@ -89,7 +89,7 @@ function minuteValue(minute: string): number {
 
 const styles = StyleSheet.create({
   wrap: { gap: 12 },
-  none: { fontSize: 14, fontWeight: '500', paddingVertical: 6 },
+  none: { fontSize: 14, fontFamily: fonts.body, paddingVertical: 6 },
   row: { flexDirection: 'row', alignItems: 'center' },
   sideLeft: { flex: 1, alignItems: 'flex-end' },
   sideRight: { flex: 1, alignItems: 'flex-start' },
@@ -102,9 +102,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     alignItems: 'center',
   },
-  minute: { fontSize: 11, fontWeight: '700' },
+  minute: { fontSize: 11, fontFamily: fonts.monoBold },
   event: { flexDirection: 'row', alignItems: 'center', gap: 8, maxWidth: '100%' },
   eventRight: { justifyContent: 'flex-end' },
-  eventText: { fontSize: 14, fontWeight: '600', flexShrink: 1 },
+  eventText: { fontSize: 14, fontFamily: fonts.bodyMedium, flexShrink: 1 },
   card: { width: 11, height: 15, borderRadius: 2 },
 });
