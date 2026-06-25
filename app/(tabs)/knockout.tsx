@@ -11,7 +11,7 @@ import { useTitleOdds } from '../../src/hooks/useTitleOdds';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { fonts } from '../../src/theme/theme';
-import { BracketMatch, Side, buildBracket } from '../../src/utils/bracket';
+import { BracketColumn, BracketMatch, Side, buildBracket } from '../../src/utils/bracket';
 
 const CARD_W = 158;
 const CARD_H = 74;
@@ -82,6 +82,8 @@ export default function KnockoutScreen() {
 
                 <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
                   <View style={{ width: totalWidth, height: bodyHeight }}>
+                    {/* Connector elbows sit behind the cards. */}
+                    <Connectors rounds={rounds} color={theme.colors.accent} />
                     {rounds.map((col, ci) =>
                       col.matches.map((m) => (
                         <View key={m.id} style={[styles.cardWrap, { left: ci * COL_W, top: m.row * PITCH }]}>
@@ -107,6 +109,43 @@ const SHORT: Record<string, string> = {
   'Semi-final': 'Semi-finals',
   Final: 'Final',
 };
+
+/**
+ * Bracket connector lines: for every match, an elbow links each of its two
+ * feeder matches' right edge to this match's left edge, meeting at a vertical
+ * spine halfway between the columns — the classic tournament-bracket look.
+ */
+function Connectors({ rounds, color }: { rounds: BracketColumn[]; color: string }) {
+  const pos = new Map<string, { ci: number; row: number }>();
+  rounds.forEach((col, ci) => col.matches.forEach((m) => pos.set(m.id, { ci, row: m.row })));
+
+  const seg = (key: string, left: number, top: number, width: number, height: number) => (
+    <View key={key} style={{ position: 'absolute', left, top, width, height, backgroundColor: color, borderRadius: 1, opacity: 0.85 }} />
+  );
+
+  const lines: React.ReactNode[] = [];
+  const STUB = (COL_W - CARD_W) / 2; // gap between a card's edge and the spine
+  rounds.forEach((col, ci) => {
+    if (ci === 0) return;
+    col.matches.forEach((m) => {
+      const parentCY = m.row * PITCH + CARD_H / 2;
+      const parentLeftX = ci * COL_W;
+      const midX = (ci - 1) * COL_W + CARD_W + STUB;
+      lines.push(seg(`${m.id}-p`, midX, parentCY - 1, parentLeftX - midX, 2));
+      m.feeders.forEach((fid, k) => {
+        const fp = pos.get(fid);
+        if (!fp) return;
+        const childCY = fp.row * PITCH + CARD_H / 2;
+        const childRightX = (ci - 1) * COL_W + CARD_W;
+        lines.push(seg(`${m.id}-h${k}`, childRightX, childCY - 1, midX - childRightX, 2));
+        const y0 = Math.min(childCY, parentCY);
+        const h = Math.abs(parentCY - childCY);
+        if (h > 0) lines.push(seg(`${m.id}-v${k}`, midX - 1, y0, 2, h));
+      });
+    });
+  });
+  return <>{lines}</>;
+}
 
 function MatchCard({ match }: { match: BracketMatch }) {
   const theme = useTheme();
