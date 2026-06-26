@@ -5,14 +5,16 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Match } from '../data/types';
 import { useTheme } from '../theme/ThemeProvider';
 import { tabularNums } from '../theme/theme';
-import { formatKickoffTime } from '../utils/time';
+import { formatKickoffTime, formatMatchDay } from '../utils/time';
 import { Flag } from './Flag';
 
 /**
  * One fixture. The right-hand slot shows kickoff time for upcoming matches and
- * the score for live/finished ones — the eye stays in a single column.
+ * the score for live/finished ones — the eye stays in a single column. Pass
+ * `showDate` (e.g. on the stadium view, which has no per-day headers) to add the
+ * match date above the teams.
  */
-export function MatchRow({ match }: { match: Match }) {
+export function MatchRow({ match, showDate = false }: { match: Match; showDate?: boolean }) {
   const theme = useTheme();
   const router = useRouter();
   const live = match.status === 'live';
@@ -25,7 +27,7 @@ export function MatchRow({ match }: { match: Match }) {
     <Pressable
       onPress={() => router.push(`/match/${encodeURIComponent(match.id)}`)}
       style={({ pressed }) => [
-        styles.row,
+        styles.card,
         {
           backgroundColor: theme.colors.surface,
           borderColor: live ? theme.colors.live : theme.colors.hairline,
@@ -34,29 +36,37 @@ export function MatchRow({ match }: { match: Match }) {
         },
       ]}
     >
-      <View style={styles.teams}>
-        <TeamLine name={match.home.name} flag={<Flag team={match.home} size={22} />} muted={match.home.isPlaceholder} />
-        <TeamLine name={match.away.name} flag={<Flag team={match.away} size={22} />} muted={match.away.isPlaceholder} />
-      </View>
+      {showDate ? (
+        <Text style={[styles.dateLine, { color: theme.colors.textMuted, fontFamily: theme.fonts.mono }]}>
+          {formatMatchDay(match.kickoff ? new Date(match.kickoff) : null, match.date)}
+        </Text>
+      ) : null}
 
-      <View style={styles.right}>
-        {showScore ? (
-          <View style={styles.scoreCol}>
-            <Text style={[styles.score, tabularNums, { color: scoreColor, fontFamily: theme.fonts.display }]}>{match.homeScore ?? 0}</Text>
-            <Text style={[styles.score, tabularNums, { color: scoreColor, fontFamily: theme.fonts.display }]}>{match.awayScore ?? 0}</Text>
+      <View style={styles.mainRow}>
+        <View style={styles.teams}>
+          <TeamLine name={match.home.name} flag={<Flag team={match.home} size={22} />} muted={match.home.isPlaceholder} />
+          <TeamLine name={match.away.name} flag={<Flag team={match.away} size={22} />} muted={match.away.isPlaceholder} />
+        </View>
+
+        <View style={styles.right}>
+          {showScore ? (
+            <View style={styles.scoreCol}>
+              <Text style={[styles.score, tabularNums, { color: scoreColor, fontFamily: theme.fonts.display }]}>{match.homeScore ?? 0}</Text>
+              <Text style={[styles.score, tabularNums, { color: scoreColor, fontFamily: theme.fonts.display }]}>{match.awayScore ?? 0}</Text>
+            </View>
+          ) : (
+            <Text style={[styles.kickoff, tabularNums, { color: theme.colors.textSecondary, fontFamily: theme.fonts.mono }]}>
+              {formatKickoffTime(match.kickoff ? new Date(match.kickoff) : null) || 'TBD'}
+            </Text>
+          )}
+          <View style={styles.statusCol}>
+            {live ? (
+              <Text style={[styles.liveLabel, { color: theme.colors.live, fontFamily: theme.fonts.monoBold }]}>{match.statusLabel}</Text>
+            ) : finished ? (
+              <Text style={[styles.ftLabel, { color: theme.colors.textMuted, fontFamily: theme.fonts.mono }]}>FT</Text>
+            ) : null}
+            <Ionicons name="chevron-forward" size={16} color={theme.colors.textMuted} />
           </View>
-        ) : (
-          <Text style={[styles.kickoff, tabularNums, { color: theme.colors.textSecondary, fontFamily: theme.fonts.mono }]}>
-            {formatKickoffTime(match.kickoff ? new Date(match.kickoff) : null) || 'TBD'}
-          </Text>
-        )}
-        <View style={styles.statusCol}>
-          {live ? (
-            <Text style={[styles.liveLabel, { color: theme.colors.live, fontFamily: theme.fonts.monoBold }]}>{match.statusLabel}</Text>
-          ) : finished ? (
-            <Text style={[styles.ftLabel, { color: theme.colors.textMuted, fontFamily: theme.fonts.mono }]}>FT</Text>
-          ) : null}
-          <Ionicons name="chevron-forward" size={16} color={theme.colors.textMuted} />
         </View>
       </View>
     </Pressable>
@@ -79,15 +89,14 @@ function TeamLine({ name, flag, muted }: { name: string; flag: React.ReactNode; 
 }
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  card: {
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderRadius: 14,
     marginBottom: 8,
-    gap: 10,
   },
+  dateLine: { fontSize: 11, letterSpacing: 0.3, marginBottom: 9 },
+  mainRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   teams: { flex: 1, gap: 10 },
   teamLine: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   teamName: { fontSize: 15, fontWeight: '600', flexShrink: 1 },

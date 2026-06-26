@@ -115,7 +115,7 @@ export default function StadiumScreen() {
               <Text style={[styles.sectionSub, { color: theme.colors.textMuted, fontFamily: fonts.mono }]}>{section.sub}</Text>
             </View>
           )}
-          renderItem={({ item }) => <MatchRow match={item} />}
+          renderItem={({ item }) => <MatchRow match={item} showDate />}
           ListEmptyComponent={
             <EmptyState icon="calendar-outline" title="No matches at this stadium" message="Pick another venue from the dropdown." />
           }
