@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { Pressable, RefreshControl, SectionList, StyleSheet, Text, View } from 'react-native';
@@ -41,6 +41,7 @@ export default function MatchesScreen() {
         right={
           <View style={styles.headerRight}>
             {data?.source === 'bundled' ? <OfflineChip /> : null}
+            <StadiumButton onPress={() => router.push('/stadium')} />
             <GlobeButton onPress={() => router.push('/map')} />
           </View>
         }
@@ -126,6 +127,24 @@ function GlobeButton({ onPress }: { onPress: () => void }) {
       ]}
     >
       <Ionicons name="globe-outline" size={20} color={theme.colors.text} />
+    </Pressable>
+  );
+}
+
+function StadiumButton({ onPress }: { onPress: () => void }) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="Browse matches by stadium"
+      hitSlop={8}
+      style={({ pressed }) => [
+        styles.globeBtn,
+        { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, opacity: pressed ? 0.6 : 1 },
+      ]}
+    >
+      <MaterialCommunityIcons name="stadium-variant" size={20} color={theme.colors.text} />
     </Pressable>
   );
 }
