@@ -9,6 +9,16 @@ import { Match, TeamRef } from '../data/types';
  * optional ESPN snapshot (see scripts/fetch-players.mjs). Where that snapshot is
  * missing, players level on goals simply share a rank.
  */
+/** One of a scorer's goals, with the game and minute it was scored in. */
+export type GoalDetail = {
+  matchId: string;
+  opponent: TeamRef;
+  date: string;
+  kickoff: string | null;
+  minute: string;
+  penalty: boolean;
+};
+
 export type ScorerRow = {
   rank: number; // joint: players level on goals (& assists) share a rank
   player: string;
@@ -17,10 +27,20 @@ export type ScorerRow = {
   penalties: number;
   assists: number; // 0 when unknown
   minutes: number | null; // null when unknown
+  events: GoalDetail[]; // every goal, oldest → newest
 };
 
+function minuteValue(minute: string): number {
+  const m = minute.match(/(\d+)(?:\+(\d+))?/);
+  if (!m) return 999;
+  return parseInt(m[1], 10) + (m[2] ? parseInt(m[2], 10) / 100 : 0);
+}
+
 export function buildGoldenBoot(matches: Match[], stats?: PlayerStatIndex | null): ScorerRow[] {
-  const agg = new Map<string, { player: string; team: TeamRef; goals: number; penalties: number }>();
+  const agg = new Map<
+    string,
+    { player: string; team: TeamRef; goals: number; penalties: number; events: GoalDetail[] }
+  >();
 
   for (const m of matches) {
     // Only real, contested goals — skip un-played fixtures and placeholder sides.
@@ -28,18 +48,23 @@ export function buildGoldenBoot(matches: Match[], stats?: PlayerStatIndex | null
     for (const g of m.goals) {
       if (g.ownGoal || !g.name.trim()) continue;
       const team = g.team === 'home' ? m.home : m.away;
+      const opponent = g.team === 'home' ? m.away : m.home;
       if (team.isPlaceholder) continue;
       const key = `${g.name.trim().toLowerCase()}|${team.code}`;
-      const cur = agg.get(key) ?? { player: g.name.trim(), team, goals: 0, penalties: 0 };
+      const cur = agg.get(key) ?? { player: g.name.trim(), team, goals: 0, penalties: 0, events: [] };
       cur.goals += 1;
       if (g.penalty) cur.penalties += 1;
+      cur.events.push({ matchId: m.id, opponent, date: m.date, kickoff: m.kickoff, minute: g.minute, penalty: !!g.penalty });
       agg.set(key, cur);
     }
   }
 
   const enriched = [...agg.values()].map((r) => {
     const s = stats?.get(normPlayer(r.player));
-    return { ...r, assists: s?.assists ?? 0, minutes: s ? s.minutes : null };
+    const events = [...r.events].sort(
+      (a, b) => (a.kickoff ?? a.date).localeCompare(b.kickoff ?? b.date) || minuteValue(a.minute) - minuteValue(b.minute)
+    );
+    return { ...r, events, assists: s?.assists ?? 0, minutes: s ? s.minutes : null };
   });
 
   // Official ordering: goals desc → assists desc → fewest minutes → name.
@@ -71,6 +96,7 @@ export function buildGoldenBoot(matches: Match[], stats?: PlayerStatIndex | null
       penalties: r.penalties,
       assists: r.assists,
       minutes: r.minutes,
+      events: r.events,
     };
   });
 }
