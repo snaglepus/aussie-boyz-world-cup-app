@@ -8,6 +8,7 @@ import { Flag } from '../../src/components/Flag';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { SkeletonBlock } from '../../src/components/Skeleton';
 import { Match } from '../../src/data/types';
+import { usePlayerStats } from '../../src/hooks/usePlayerStats';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { fonts, tabularNums } from '../../src/theme/theme';
@@ -18,8 +19,9 @@ export default function PlayersScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { data, isLoading, isFetching, refetch } = useWorldCup();
+  const { data: stats } = usePlayerStats();
 
-  const rows = useMemo(() => buildGoldenBoot(data?.matches ?? []), [data]);
+  const rows = useMemo(() => buildGoldenBoot(data?.matches ?? [], stats), [data, stats]);
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.bg, paddingTop: insets.top }}>
@@ -30,8 +32,8 @@ export default function PlayersScreen() {
         refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={theme.colors.accent} />}
       >
         <Text style={[styles.note, { color: theme.colors.textMuted, fontFamily: fonts.mono }]}>
-          Awarded to the tournament&apos;s top scorer. Own goals don&apos;t count; penalties do. Players level on goals
-          share a rank (official tie-breakers: assists, then fewest minutes).
+          The tournament&apos;s top scorer. Own goals don&apos;t count; penalties do. Ranked by goals, then assists, then
+          fewest minutes played — the official tie-breakers (G = goals, A = assists).
         </Text>
 
         {isLoading && !data ? (
@@ -83,9 +85,14 @@ function ScorerCard({ row, prev }: { row: ScorerRow; prev?: ScorerRow }) {
         </Text>
       </View>
       {leader ? <MaterialCommunityIcons name="shoe-cleat" size={18} color={theme.colors.gold} style={styles.boot} /> : null}
-      <Text style={[styles.goals, tabularNums, { color: leader ? theme.colors.gold : theme.colors.text, fontFamily: fonts.display }]}>
-        {row.goals}
-      </Text>
+      <View style={styles.statCol}>
+        <Text style={[styles.goals, tabularNums, { color: leader ? theme.colors.gold : theme.colors.text, fontFamily: fonts.display }]}>
+          {row.goals}
+        </Text>
+        <Text style={[styles.statLabel, { color: theme.colors.textMuted, fontFamily: fonts.mono }]}>
+          {row.assists > 0 ? `${row.goals}G ${row.assists}A` : 'GOALS'}
+        </Text>
+      </View>
     </Pressable>
   );
 }
@@ -107,5 +114,7 @@ const styles = StyleSheet.create({
   player: { fontSize: 15 },
   team: { fontSize: 11, marginTop: 2 },
   boot: { marginRight: -2 },
-  goals: { fontSize: 22, minWidth: 26, textAlign: 'right' },
+  statCol: { alignItems: 'flex-end', minWidth: 40 },
+  goals: { fontSize: 22, textAlign: 'right' },
+  statLabel: { fontSize: 9, letterSpacing: 0.4, marginTop: 1 },
 });

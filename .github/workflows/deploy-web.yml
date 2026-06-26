@@ -48,6 +48,11 @@ jobs:
           EXPO_PUBLIC_ODDS_API_KEY: ${{ secrets.EXPO_PUBLIC_ODDS_API_KEY }}
         run: node scripts/fetch-odds.mjs
 
+      - name: Fetch player stats snapshot
+        # Writes dist/players-stats.json (assists + minutes from ESPN's keyless
+        # feed) so the Golden Boot leaderboard can apply the official tie-breakers.
+        run: node scripts/fetch-players.mjs
+
       - name: SPA fallback + disable Jekyll
         # GitHub Pages 404s unknown paths; serving index.html as 404.html lets
         # client-side routing handle deep links / hard refreshes. .nojekyll keeps
