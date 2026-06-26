@@ -14,7 +14,7 @@ import { fonts } from '../../src/theme/theme';
 import { BracketColumn, BracketMatch, Side, buildBracket } from '../../src/utils/bracket';
 
 const CARD_W = 158;
-const CARD_H = 74;
+const CARD_H = 86;
 const GAP = 18;
 const PITCH = CARD_H + GAP; // vertical pitch of the first (Round of 32) column
 const LABEL_H = 34; // space at the top of each column for the round label
@@ -222,11 +222,11 @@ const styles = StyleSheet.create({
   labelRow: { flexDirection: 'row', height: LABEL_H, paddingTop: 4 },
   roundLabel: { fontSize: 11, fontFamily: fonts.heading, letterSpacing: 0.2 },
   cardWrap: { position: 'absolute', width: CARD_W, height: CARD_H },
-  card: { height: CARD_H, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 10, paddingVertical: 8, justifyContent: 'center', gap: 5 },
-  meta: { fontSize: 10, fontFamily: fonts.mono, marginBottom: 1 },
+  card: { height: CARD_H, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 10, paddingVertical: 9, justifyContent: 'center', gap: 5 },
+  meta: { fontSize: 10, lineHeight: 13, fontFamily: fonts.mono, marginBottom: 2 },
   side: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   tbdDot: { width: 18, height: 13, borderRadius: 3, borderWidth: StyleSheet.hairlineWidth },
-  sideName: { fontSize: 12.5, flex: 1 },
+  sideName: { fontSize: 12.5, lineHeight: 16, flex: 1 },
   tick: { marginLeft: -2 },
   score: { fontSize: 13, fontFamily: fonts.monoBold, minWidth: 12, textAlign: 'right' },
 });
