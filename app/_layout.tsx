@@ -65,6 +65,7 @@ export default function RootLayout() {
               options={{ title: 'Match', presentation: 'card', headerBackTitle: 'Back' }}
             />
             <Stack.Screen name="map" options={{ headerShown: false, presentation: 'card' }} />
+            <Stack.Screen name="stadium" options={{ headerShown: false, presentation: 'card' }} />
           </Stack>
         </ThemeProvider>
       </SafeAreaProvider>

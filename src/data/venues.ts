@@ -21,7 +21,7 @@ export type VenueLocation = {
   aliases: string[];
 };
 
-const VENUES: VenueLocation[] = [
+export const VENUES: VenueLocation[] = [
   { city: 'Atlanta', stadium: 'Mercedes-Benz Stadium', lat: 33.7553, lng: -84.4006, aliases: ['atlanta', 'mercedes-benz'] },
   { city: 'Boston', stadium: 'Gillette Stadium', lat: 42.0909, lng: -71.2643, aliases: ['boston', 'foxborough', 'gillette'] },
   { city: 'Dallas', stadium: 'AT&T Stadium', lat: 32.7473, lng: -97.0945, aliases: ['dallas', 'arlington', 'at&t', 'at and t'] },
