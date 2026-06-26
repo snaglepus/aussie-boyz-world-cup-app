@@ -69,7 +69,7 @@ export function buildPlayoffPicture(groups: GroupTable[]): PlayoffBand[] {
   // can't make its group's top 2) is mathematically out.
   const thirdFloor = qualifyingThirds.length ? Math.min(...qualifyingThirds.map((s) => s.pts)) : 0;
 
-  const clinch = clinchMap(groups, thirdFloor);
+  const clinch = clinchMap(groups, thirdFloor, qualifiers);
 
   const defs: { key: BandKey; label: string; sublabel: string; list: Standing[] }[] = [
     { key: 'winners', label: 'Group winners', sublabel: '1st in group · into Round of 32', list: winners.sort(sortStanding) },
@@ -98,33 +98,39 @@ export function buildPlayoffPicture(groups: GroupTable[]): PlayoffBand[] {
 }
 
 /** Per-team clinch status, computed within each group plus the best-third floor. */
-function clinchMap(groups: GroupTable[], thirdFloor: number): Map<string, Clinch> {
+function clinchMap(groups: GroupTable[], thirdFloor: number, qualifiers: Set<string>): Map<string, Clinch> {
   const out = new Map<string, Clinch>();
   const maxPoss = (s: Standing) => s.pts + 3 * Math.max(0, GROUP_GAMES - s.mp);
+  // Group stage fully over → every position (and the best-third cut) is final.
+  const allDone = groups.every((g) => g.rows.every((r) => r.mp >= GROUP_GAMES));
 
   for (const g of groups) {
     const rows = g.rows;
-    for (const s of rows) {
-      const rivals = rows.filter((r) => teamKey(r.team) !== teamKey(s.team));
+    // A fully-played group has a settled table, so the standings position is the
+    // team's real fate — no need to reason about points a rival "could" still reach
+    // (which wrongly treats a finished, points-tied lower team as a live threat).
+    const groupDone = rows.every((r) => r.mp >= GROUP_GAMES);
+    rows.forEach((s, pos) => {
+      const key = teamKey(s.team);
+      if (groupDone) {
+        if (pos === 0) return void out.set(key, 'won-group'); // group winner
+        if (pos === 1) return void out.set(key, 'qualified'); // runner-up — top 2 always advance
+        if (pos === 3) return void out.set(key, 'eliminated'); // 4th never advances
+        // 3rd place: only final once every group is done (other groups' thirds compete).
+        if (allDone) return void out.set(key, qualifiers.has(key) ? 'qualified' : 'eliminated');
+        // otherwise fall through to the in-progress heuristic below.
+      }
+      const rivals = rows.filter((r) => teamKey(r.team) !== key);
       // Group won: no rival can reach this team's current points.
-      if (rivals.every((r) => maxPoss(r) < s.pts)) {
-        out.set(teamKey(s.team), 'won-group');
-        continue;
-      }
+      if (rivals.every((r) => maxPoss(r) < s.pts)) return void out.set(key, 'won-group');
       // Top-2 secured: at most one rival can still reach this team's points.
-      if (rivals.filter((r) => maxPoss(r) >= s.pts).length <= 1) {
-        out.set(teamKey(s.team), 'qualified');
-        continue;
-      }
+      if (rivals.filter((r) => maxPoss(r) >= s.pts).length <= 1) return void out.set(key, 'qualified');
       // Out: ≥2 rivals already beat this team's best, and it can't reach the
       // current best-third points floor even if it wins out.
       const guaranteedAbove = rivals.filter((r) => r.pts > maxPoss(s)).length;
-      if (guaranteedAbove >= 2 && maxPoss(s) < thirdFloor) {
-        out.set(teamKey(s.team), 'eliminated');
-        continue;
-      }
-      out.set(teamKey(s.team), 'none');
-    }
+      if (guaranteedAbove >= 2 && maxPoss(s) < thirdFloor) return void out.set(key, 'eliminated');
+      out.set(key, 'none');
+    });
   }
   return out;
 }
