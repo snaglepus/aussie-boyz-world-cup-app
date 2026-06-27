@@ -98,6 +98,14 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
   const groupGames = data.matches.filter((m) => m.group && !m.home.isPlaceholder && !m.away.isPlaceholder);
   const groupFinalised = groupGames.length > 0 && groupGames.every((m) => m.status === 'finished');
 
+  // Per-group completion: a winner/runner-up slot (1X/2X) is settled the moment
+  // ITS group finishes, even while other groups are still playing.
+  const groupDone = new Map<string, boolean>();
+  for (const m of groupGames) {
+    const L = letter(m.group ?? '');
+    groupDone.set(L, (groupDone.get(L) ?? true) && m.status === 'finished');
+  }
+
   // Vertical layout rows from the actual feeder tree: walk down from the Final
   // following each match's W## feeders to order the R32 leaves, then place every
   // parent at the midpoint of its two children. This makes each card line up
@@ -148,7 +156,8 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
     let g: RegExpMatchArray | null;
     if ((g = s.match(/^([12])([A-L])$/))) {
       const team = (rank.get(g[2]) ?? [])[Number(g[1]) - 1];
-      if (team && !team.isPlaceholder) return { team, label: team.name, confirmed: groupFinalised };
+      // Confirmed once this slot's own group is fully played (top-2 are then set).
+      if (team && !team.isPlaceholder) return { team, label: team.name, confirmed: groupDone.get(g[2]) === true };
       return { team: null, label: g[1] === '1' ? `Winner Grp ${g[2]}` : `Runner-up ${g[2]}`, confirmed: false };
     }
     if (/^3[A-L/]+$/.test(s)) {
