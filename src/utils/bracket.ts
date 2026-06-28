@@ -270,17 +270,48 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
  * candidate set includes it (deterministic backtracking — slots in match order,
  * groups alphabetical). Returns slot match number → that group's third team.
  */
+// FIFA's official Round-of-32 allocation of the eight best third-placed teams,
+// keyed by the set of qualifying third-placed groups, then by each slot's
+// candidate set → the group whose third fills it. Candidate-set matching alone is
+// ambiguous (many valid bijections), so the official table is the source of truth;
+// any combination not listed falls back to the deterministic backtracking below.
+const THIRD_ALLOCATION: Record<string, Record<string, string>> = {
+  'B,D,E,F,I,J,K,L': {
+    'A,B,C,D,F': 'D',
+    'C,D,F,G,H': 'F',
+    'C,E,F,H,I': 'E',
+    'B,E,F,I,J': 'B',
+    'A,E,H,I,J': 'I',
+    'E,F,G,I,J': 'J',
+    'E,H,I,J,K': 'K',
+    'D,E,I,J,L': 'L',
+  },
+};
+
 function assignThirds(ko: Match[], qualGroupTeam: Map<string, TeamRef>): Map<number, TeamRef> {
   const slots = ko
     .filter((m) => m.round === 'Round of 32')
     .map((m) => {
       const raw = [m.homeSlot, m.awaySlot].find((x) => /^3[A-L/]+$/.test(x ?? ''));
-      return raw ? { num: numOf(m), cands: raw.slice(1).split('/') } : null;
+      return raw ? { num: numOf(m), cands: raw.slice(1).split('/').sort() } : null;
     })
     .filter((s): s is { num: number; cands: string[] } => !!s)
     .sort((a, b) => a.num - b.num);
 
   const groups = [...qualGroupTeam.keys()].sort();
+
+  // Official table first — exact, matches the published bracket.
+  const official = THIRD_ALLOCATION[groups.join(',')];
+  if (official) {
+    const map = new Map<number, TeamRef>();
+    for (const slot of slots) {
+      const grp = official[slot.cands.join(',')];
+      const team = grp ? qualGroupTeam.get(grp) : undefined;
+      if (team) map.set(slot.num, team);
+    }
+    if (map.size === slots.length) return map;
+  }
+
   const assign: Record<number, string> = {};
   const usedSlot = new Set<number>();
 
