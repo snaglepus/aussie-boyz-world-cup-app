@@ -161,11 +161,12 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
       return { team: null, label: g[1] === '1' ? `Winner Grp ${g[2]}` : `Runner-up ${g[2]}`, confirmed: false };
     }
     if (/^3[A-L/]+$/.test(s)) {
-      // A coded third slot is still our approximation (openfootball swaps in the
-      // real name once it's official), so never treat it as confirmed.
+      // Once every group is done the 8 best thirds are locked in, so the team is
+      // confirmed into the Round of 32. (Which exact slot a third fills follows
+      // FIFA's allocation table; our assignment is one valid option among several.)
       const team = thirdSlotAssign.get(matchNum);
       return team
-        ? { team, label: team.name, confirmed: false }
+        ? { team, label: team.name, confirmed: groupFinalised }
         : { team: null, label: `3rd ${s.slice(1)}`, confirmed: false };
     }
     if ((g = s.match(/^W(\d+)$/))) {
