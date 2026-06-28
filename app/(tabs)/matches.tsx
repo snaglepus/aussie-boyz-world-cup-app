@@ -11,9 +11,11 @@ import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { SegmentedControl } from '../../src/components/SegmentedControl';
 import { liveMatches, playedMatches, upcomingMatches } from '../../src/data/service';
 import { Match } from '../../src/data/types';
+import { useTitleOdds } from '../../src/hooks/useTitleOdds';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { fonts } from '../../src/theme/theme';
+import { BracketMatch, buildBracket } from '../../src/utils/bracket';
 import { formatMatchDay } from '../../src/utils/time';
 
 type Filter = 'upcoming' | 'played';
@@ -23,15 +25,32 @@ export default function MatchesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { data, isLoading, isFetching, refetch } = useWorldCup();
+  const { data: odds } = useTitleOdds();
   const [filter, setFilter] = useState<Filter>('upcoming');
 
   const live = data ? liveMatches(data) : [];
 
+  // Knockout fixtures still carry slot codes ("1st Group G", "3rd place …") in the
+  // raw feed. Swap in the real team once a slot is *confirmed* (its group is done),
+  // matching the Knockout screen; genuinely-undecided slots keep their placeholder.
+  const bracketById = useMemo(() => {
+    const map = new Map<string, BracketMatch>();
+    if (data) for (const col of buildBracket(data, odds).columns) for (const bm of col.matches) map.set(bm.id, bm);
+    return map;
+  }, [data, odds]);
+
   const sections = useMemo(() => {
     if (!data) return [];
-    const list = filter === 'upcoming' ? upcomingMatches(data) : playedMatches(data);
+    const raw = filter === 'upcoming' ? upcomingMatches(data) : playedMatches(data);
+    const list = raw.map((m) => {
+      const b = bracketById.get(m.id);
+      if (!b) return m;
+      const home = b.home.confirmed && b.home.team ? b.home.team : m.home;
+      const away = b.away.confirmed && b.away.team ? b.away.team : m.away;
+      return home === m.home && away === m.away ? m : { ...m, home, away };
+    });
     return groupByDay(list, filter === 'played');
-  }, [data, filter]);
+  }, [data, filter, bracketById]);
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.bg, paddingTop: insets.top }}>
