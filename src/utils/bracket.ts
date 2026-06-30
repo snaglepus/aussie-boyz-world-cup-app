@@ -79,10 +79,16 @@ export type BracketMatch = {
   decided: boolean;
   /** Side to emphasise: the winner once decided, else the projected favourite. */
   lead: 'home' | 'away' | null;
-  /** Both participants are set (their feeder match-ups are locked) → show the two
-   * teams with the favourite highlighted. False ⇒ show only the predicted team. */
-  dual: boolean;
+  /** When a side's feeder match is a locked-but-unplayed pairing, both its teams
+   * are shown ("both options") with the predicted winner first/highlighted; null
+   * ⇒ render the single resolved team for that side instead. */
+  homeFeeder?: FeederPair | null;
+  awayFeeder?: FeederPair | null;
 };
+
+/** The two teams of a confirmed-but-unplayed feeder tie, with the predicted
+ * winner (`fav`) we expect to advance into the slot. */
+export type FeederPair = { fav: TeamRef; other: TeamRef };
 
 export type BracketColumn = { round: KnockoutRound; matches: BracketMatch[] };
 export type Bracket = {
@@ -279,15 +285,22 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
               ? 'away'
               : null
           : null;
-        // Show both teams once each feeder's match-up is locked (both its
-        // participants are real); Round-of-32 ties are locked by definition.
-        const fs = feedersOf(m);
-        const dual = fs.length
-          ? fs.every((f) => {
-              const fr = resolveMatch(numOf(f));
-              return fr.home.confirmed && fr.away.confirmed;
-            })
-          : r.home.confirmed && r.away.confirmed;
+        // Per-slot "both options": when a side's feeder tie is a locked but not-
+        // yet-played pairing (both its teams are real, no winner yet), show those
+        // two teams with the one we expect to advance highlighted. Once that feeder
+        // is played the slot resolves to the single real winner instead.
+        const slotPair = (rawSlot: string | undefined): FeederPair | null => {
+          const w = (rawSlot ?? '').match(/^W(\d+)$/);
+          const f = w ? byNum.get(Number(w[1])) : undefined;
+          if (!f) return null;
+          const fr = resolveMatch(numOf(f));
+          if (fr.decided || !fr.winner || !fr.home.team || !fr.away.team) return null;
+          if (!fr.home.confirmed || !fr.away.confirmed) return null;
+          const favIsHome = fr.winner === fr.home.team;
+          return { fav: fr.winner, other: favIsHome ? fr.away.team : fr.home.team };
+        };
+        const homeFeeder = slotPair(m.homeSlot);
+        const awayFeeder = slotPair(m.awaySlot);
         return {
           id: m.id,
           round,
@@ -306,7 +319,8 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
           proj,
           decided: r.decided,
           lead,
-          dual,
+          homeFeeder,
+          awayFeeder,
         };
       });
     return { round, matches };
