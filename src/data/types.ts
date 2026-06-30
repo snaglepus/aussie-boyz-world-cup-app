@@ -34,6 +34,18 @@ export type MatchStats = {
   percent?: boolean;
 };
 
+/**
+ * Three-way match odds as de-vigged implied probabilities (home + draw + away ≈ 1),
+ * parsed from a bookmaker's moneyline. `live` is true when these are the in-play
+ * (`current`) prices that move during the match, false for the pre-match line.
+ */
+export type MatchOdds = {
+  home: number;
+  draw: number;
+  away: number;
+  live: boolean;
+};
+
 export type Match = {
   id: string;
   round: string;
@@ -52,6 +64,8 @@ export type Match = {
   cards: CardEvent[];
   stats: MatchStats[];
   penalties: { home: number; away: number } | null;
+  /** 3-way match odds (live when in play), when a bookmaker line is available. */
+  odds?: MatchOdds | null;
   status: MatchStatus;
   /** Live minute / status label, e.g. "67'", "HT", "FT". */
   statusLabel: string;

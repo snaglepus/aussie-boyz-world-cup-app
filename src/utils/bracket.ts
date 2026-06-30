@@ -3,6 +3,7 @@ import { toTeamRef } from '../data/countries';
 import { Match, MatchStatus, TeamRef, WorldCupData } from '../data/types';
 import { teamKey } from './standings';
 import { buildStrength } from './strength';
+import { advanceProb, liveNudge } from './winprob';
 
 /**
  * Resolves the knockout bracket from the group data.
@@ -71,6 +72,9 @@ export type BracketMatch = {
   /** Ids of the (up to two) earlier-round matches that feed this one — used to
    * draw the bracket connector lines. Empty for Round-of-32. */
   feeders: string[];
+  /** Projected advancer + their advance chance from this tie's odds, when the
+   * result isn't in yet and a bookmaker line exists. `live` ⇒ in-play price. */
+  proj?: { winner: 'home' | 'away'; pct: number; live: boolean } | null;
 };
 
 export type BracketColumn = { round: KnockoutRound; matches: BracketMatch[] };
@@ -90,6 +94,12 @@ function confirmedSide(name: string): Side {
 function numOf(m: Match): number {
   const mt = m.id.match(/(\d+)\s*$/);
   return mt ? Number(mt[1]) : NaN;
+}
+
+/** Live minute from a status label like "67'" or "45+2'" → 67 / 47 (0 if none). */
+function minuteOf(label: string): number {
+  const m = label.match(/(\d+)(?:\+(\d+))?/);
+  return m ? Number(m[1]) + (m[2] ? Number(m[2]) : 0) : 0;
 }
 
 export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Bracket {
@@ -209,10 +219,23 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
         decided = true;
       }
     } else if (home.team && away.team) {
-      // Not played yet → project the stronger side through (a guess, see banner).
-      const sh = strength.get(teamKey(home.team)) ?? 0;
-      const sa = strength.get(teamKey(away.team)) ?? 0;
-      const homeWins = sh !== sa ? sh > sa : home.team.code <= away.team.code;
+      // Not decided yet → project a side through (a guess, see banner). Prefer the
+      // match's own odds: in play these are ESPN's live price, so the bracket shifts
+      // with the game. With no line, fall back to the strength model — nudged by the
+      // live scoreline if the match is under way.
+      let pHome: number; // home's chance of advancing, 0–1
+      if (m.odds) {
+        const ap = advanceProb(m.odds);
+        pHome = ap.home + ap.away > 0 ? ap.home / (ap.home + ap.away) : 0.5;
+      } else {
+        const sh = strength.get(teamKey(home.team)) ?? 0;
+        const sa = strength.get(teamKey(away.team)) ?? 0;
+        pHome = sh + sa > 0 ? sh / (sh + sa) : 0.5;
+        if (m.status === 'live' && m.homeScore != null && m.awayScore != null) {
+          pHome = liveNudge(pHome, m.homeScore, m.awayScore, minuteOf(m.statusLabel));
+        }
+      }
+      const homeWins = pHome !== 0.5 ? pHome > 0.5 : home.team.code <= away.team.code;
       winner = homeWins ? home.team : away.team;
       loser = homeWins ? away.team : home.team;
     }
@@ -227,6 +250,17 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
       .sort((a, b) => numOf(a) - numOf(b))
       .map((m): BracketMatch => {
         const r = resolveMatch(numOf(m));
+        let proj: BracketMatch['proj'] = null;
+        if (!r.decided && m.odds && r.winner && r.home.team && r.away.team) {
+          const ap = advanceProb(m.odds);
+          const tot = ap.home + ap.away || 1;
+          const winnerIsHome = r.winner === r.home.team;
+          proj = {
+            winner: winnerIsHome ? 'home' : 'away',
+            pct: Math.round(((winnerIsHome ? ap.home : ap.away) / tot) * 100),
+            live: m.odds.live,
+          };
+        }
         return {
           id: m.id,
           round,
@@ -242,6 +276,7 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
           statusLabel: m.statusLabel,
           row: rowByNum.get(numOf(m)) ?? 0,
           feeders: feedersOf(m).map((f) => f.id),
+          proj,
         };
       });
     return { round, matches };

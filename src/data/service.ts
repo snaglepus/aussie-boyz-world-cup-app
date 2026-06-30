@@ -58,6 +58,7 @@ function overlayLive(base: Match[], live: Match[]): Match[] {
       cards: hit.cards.length ? hit.cards : m.cards,
       stats: hit.stats.length ? hit.stats : m.stats,
       penalties: hit.penalties ?? m.penalties,
+      odds: hit.odds ?? m.odds,
       status: hit.status,
       statusLabel: hit.statusLabel,
       source: 'live',
