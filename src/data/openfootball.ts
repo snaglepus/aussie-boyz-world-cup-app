@@ -15,7 +15,8 @@ export type RawMatch = {
   team1: string;
   team2: string;
   ground?: string;
-  score?: { ft?: [number, number]; ht?: [number, number] };
+  // ft = 90-min full time, et = after extra time, p = penalty shootout totals.
+  score?: { ft?: [number, number]; ht?: [number, number]; et?: [number, number]; p?: [number, number] };
   goals1?: RawGoal[];
   goals2?: RawGoal[];
 };
@@ -41,7 +42,12 @@ function normalise(m: RawMatch, index: number, now: Date): Match {
   const kickoff = parseKickoff(m.date, m.time);
   const ft = m.score?.ft ?? null;
   const ht = m.score?.ht ?? null;
+  const et = m.score?.et ?? null;
+  const pens = m.score?.p ?? null;
   const hasFinal = Array.isArray(ft) && ft.length === 2;
+  // The headline score is the result before any shootout: use the after-extra-time
+  // line when a knockout tie went to ET, otherwise the 90-minute full-time score.
+  const final = Array.isArray(et) && et.length === 2 ? et : ft;
 
   const goals: GoalEvent[] = [
     ...(m.goals1 ?? []).map((g) => mapGoal(g, 'home')),
@@ -62,13 +68,13 @@ function normalise(m: RawMatch, index: number, now: Date): Match {
     ground: m.ground,
     home,
     away,
-    homeScore: hasFinal ? ft![0] : null,
-    awayScore: hasFinal ? ft![1] : null,
+    homeScore: hasFinal ? final![0] : null,
+    awayScore: hasFinal ? final![1] : null,
     htScore: Array.isArray(ht) && ht.length === 2 ? [ht[0], ht[1]] : null,
     goals,
     cards: [], // openfootball does not carry cards
     stats: [],
-    penalties: null,
+    penalties: Array.isArray(pens) && pens.length === 2 ? { home: pens[0], away: pens[1] } : null,
     status: live.status,
     statusLabel: live.label,
     source: 'static',
