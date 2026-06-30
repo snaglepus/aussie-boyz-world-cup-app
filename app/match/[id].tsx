@@ -6,11 +6,13 @@ import { Card } from '../../src/components/Card';
 import { EmptyState } from '../../src/components/EmptyState';
 import { EventsTimeline } from '../../src/components/EventsTimeline';
 import { ScoreHero } from '../../src/components/ScoreHero';
+import { Shootout } from '../../src/components/Shootout';
 import { StatBars } from '../../src/components/StatBars';
 import { VenueMiniMap } from '../../src/components/VenueMiniMap';
 import { Match } from '../../src/data/types';
 import { resolveVenue } from '../../src/data/venues';
 import { useMatchStats } from '../../src/hooks/useMatchStats';
+import { useShootouts } from '../../src/hooks/useShootouts';
 import { useTitleOdds } from '../../src/hooks/useTitleOdds';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
@@ -35,6 +37,8 @@ export default function MatchDetail() {
   );
   // Pull full team stats + booking events from ESPN for finished games that lack them.
   const { data: fetchedDetail } = useMatchStats(match);
+  // Per-taker shootout breakdown (build-time ESPN snapshot), only for pens games.
+  const { data: shootouts } = useShootouts();
 
   if (!match) {
     return (
@@ -76,6 +80,12 @@ export default function MatchDetail() {
             </View>
           ) : null}
         </Card>
+
+        {display.penalties && shootouts?.get(matchId) ? (
+          <Card title="Penalty shootout">
+            <Shootout shootout={shootouts.get(matchId)!} home={display.home} away={display.away} />
+          </Card>
+        ) : null}
 
         {display.goals.length || display.cards.length ? (
           <Card title="Events">
