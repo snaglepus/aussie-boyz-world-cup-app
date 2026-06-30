@@ -10,6 +10,7 @@ import { SkeletonBlock } from '../../src/components/Skeleton';
 import { useTitleOdds } from '../../src/hooks/useTitleOdds';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
+import { TeamRef } from '../../src/data/types';
 import { fonts } from '../../src/theme/theme';
 import { BracketColumn, BracketMatch, Side, buildBracket } from '../../src/utils/bracket';
 
@@ -155,13 +156,6 @@ function MatchCard({ match }: { match: BracketMatch }) {
   const theme = useTheme();
   const router = useRouter();
   const finished = match.status === 'finished';
-  const emph = (side: 'home' | 'away'): Emphasis =>
-    match.lead !== side ? 'none' : match.decided ? 'win' : 'fav';
-
-  // Once both feeders' match-ups are locked we show the two teams and highlight
-  // the favourite; until then a single predicted team stands in for the tie.
-  const single = !match.dual;
-  const leadSide = match.lead === 'away' ? match.away : match.home;
 
   return (
     <Pressable
@@ -179,20 +173,47 @@ function MatchCard({ match }: { match: BracketMatch }) {
         {shortDate(match.kickoff, match.date)}
         {match.ground ? ` · ${city(match.ground)}` : ''}
       </Text>
-      {single ? (
-        <SideRow
-          side={leadSide}
-          score={null}
-          emphasis="none"
-          proj={match.proj && match.proj.winner === match.lead ? match.proj : null}
-        />
-      ) : (
-        <>
-          <SideRow side={match.home} score={finished ? match.homeScore : null} pen={match.penalties?.home ?? null} penWin={!!match.penalties && match.penalties.home > match.penalties.away} proj={match.proj?.winner === 'home' ? match.proj : null} emphasis={emph('home')} />
-          <SideRow side={match.away} score={finished ? match.awayScore : null} pen={match.penalties?.away ?? null} penWin={!!match.penalties && match.penalties.away > match.penalties.home} proj={match.proj?.winner === 'away' ? match.proj : null} emphasis={emph('away')} />
-        </>
-      )}
+      <SlotRow match={match} which="home" score={finished ? match.homeScore : null} />
+      <SlotRow match={match} which="away" score={finished ? match.awayScore : null} />
     </Pressable>
+  );
+}
+
+/**
+ * One side of a knockout card. When that side's feeder tie is a locked-but-
+ * unplayed pairing we show *both* its teams ("Portugal / Croatia") with the
+ * predicted winner in lime; otherwise we show the single resolved team —
+ * highlighted lime if it's this match's favourite, ticked if it actually won.
+ */
+function SlotRow({ match, which, score }: { match: BracketMatch; which: 'home' | 'away'; score: number | null }) {
+  const side = which === 'home' ? match.home : match.away;
+  const feeder = which === 'home' ? match.homeFeeder : match.awayFeeder;
+  const isLead = match.lead === which;
+
+  if (!match.decided && feeder) {
+    return <PairRow fav={feeder.fav} other={feeder.other} />;
+  }
+
+  const emphasis: Emphasis = match.decided ? (isLead ? 'win' : 'none') : isLead ? 'fav' : 'none';
+  const pen = which === 'home' ? match.penalties?.home ?? null : match.penalties?.away ?? null;
+  const penWin =
+    !!match.penalties &&
+    (which === 'home' ? match.penalties.home > match.penalties.away : match.penalties.away > match.penalties.home);
+  const proj = match.proj?.winner === which ? match.proj : null;
+  return <SideRow side={side} score={score} pen={pen} penWin={penWin} proj={proj} emphasis={emphasis} />;
+}
+
+/** Both teams of a confirmed-but-unplayed feeder tie; the predicted winner leads in lime. */
+function PairRow({ fav, other }: { fav: TeamRef; other: TeamRef }) {
+  const theme = useTheme();
+  return (
+    <View style={styles.pairSide}>
+      <Flag team={fav} size={14} />
+      <Text numberOfLines={1} style={[styles.pairFav, { color: theme.colors.accent }]}>{fav.name}</Text>
+      <Text style={[styles.pairSlash, { color: theme.colors.textMuted }]}>/</Text>
+      <Flag team={other} size={14} />
+      <Text numberOfLines={1} style={[styles.pairOther, { color: theme.colors.textSecondary }]}>{other.name}</Text>
+    </View>
   );
 }
 
@@ -266,6 +287,10 @@ const styles = StyleSheet.create({
   card: { height: CARD_H, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 10, paddingVertical: 9, justifyContent: 'center', gap: 5 },
   meta: { fontSize: 10, lineHeight: 13, fontFamily: fonts.mono, marginBottom: 2 },
   side: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  pairSide: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  pairFav: { fontSize: 11, fontFamily: fonts.bodyBold, flexShrink: 1 },
+  pairOther: { fontSize: 11, fontFamily: fonts.bodyMedium, flexShrink: 1 },
+  pairSlash: { fontSize: 11, fontFamily: fonts.mono, marginHorizontal: 1 },
   tbdDot: { width: 18, height: 13, borderRadius: 3, borderWidth: StyleSheet.hairlineWidth },
   sideName: { fontSize: 12.5, lineHeight: 16, flex: 1 },
   tick: { marginLeft: -2 },
