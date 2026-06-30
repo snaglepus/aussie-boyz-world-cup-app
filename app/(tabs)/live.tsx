@@ -7,6 +7,7 @@ import { Card } from '../../src/components/Card';
 import { EmptyState } from '../../src/components/EmptyState';
 import { EventsTimeline } from '../../src/components/EventsTimeline';
 import { GoalScorers } from '../../src/components/GoalScorers';
+import { OddsBar } from '../../src/components/OddsBar';
 import { ScoreHero } from '../../src/components/ScoreHero';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { StatBars } from '../../src/components/StatBars';
@@ -97,12 +98,21 @@ function LiveCard({ match }: { match: Match }) {
   const theme = useTheme();
   const hasStats = match.stats.length > 0;
   const hasEvents = match.cards.length > 0;
+  const hasOdds = !!match.odds;
 
   return (
     <Pressable onPress={() => router.push(`/match/${encodeURIComponent(match.id)}`)}>
       <Card style={{ paddingBottom: hasStats || hasEvents ? 16 : 4 }}>
         <ScoreHero match={match} />
         <GoalScorers goals={match.goals} />
+        {hasOdds ? (
+          <View style={[styles.section, { borderTopColor: theme.colors.hairline }]}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]}>
+              {match.odds!.live ? 'LIVE WIN PROBABILITY' : 'WIN PROBABILITY'}
+            </Text>
+            <OddsBar odds={match.odds!} home={match.home} away={match.away} />
+          </View>
+        ) : null}
         {hasEvents ? (
           <View style={[styles.section, { borderTopColor: theme.colors.hairline }]}>
             <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]}>EVENTS</Text>
