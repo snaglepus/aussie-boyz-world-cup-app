@@ -27,6 +27,11 @@ export type ScorerRow = {
   penalties: number;
   assists: number; // 0 when unknown
   minutes: number | null; // null when unknown
+  shots: number; // attempts at goal (0 when unknown)
+  sot: number; // attempts on target (0 when unknown)
+  yellow: number;
+  red: number;
+  hasStats: boolean; // a snapshot row matched this player (extra columns are real)
   events: GoalDetail[]; // every goal, oldest → newest
 };
 
@@ -64,7 +69,17 @@ export function buildGoldenBoot(matches: Match[], stats?: PlayerStatIndex | null
     const events = [...r.events].sort(
       (a, b) => (a.kickoff ?? a.date).localeCompare(b.kickoff ?? b.date) || minuteValue(a.minute) - minuteValue(b.minute)
     );
-    return { ...r, events, assists: s?.assists ?? 0, minutes: s ? s.minutes : null };
+    return {
+      ...r,
+      events,
+      assists: s?.assists ?? 0,
+      minutes: s ? s.minutes : null,
+      shots: s?.shots ?? 0,
+      sot: s?.sot ?? 0,
+      yellow: s?.yellow ?? 0,
+      red: s?.red ?? 0,
+      hasStats: !!s,
+    };
   });
 
   // Official ordering: goals desc → assists desc → fewest minutes → name.
@@ -96,6 +111,11 @@ export function buildGoldenBoot(matches: Match[], stats?: PlayerStatIndex | null
       penalties: r.penalties,
       assists: r.assists,
       minutes: r.minutes,
+      shots: r.shots,
+      sot: r.sot,
+      yellow: r.yellow,
+      red: r.red,
+      hasStats: r.hasStats,
       events: r.events,
     };
   });

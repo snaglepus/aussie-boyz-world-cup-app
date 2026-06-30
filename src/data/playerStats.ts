@@ -7,8 +7,15 @@
  */
 const SNAPSHOT_URL = '/aussie-boyz-world-cup-app/players-stats.json';
 
-export type PlayerStat = { assists: number; minutes: number };
-/** Map of normalised player name → tie-breaker stats. */
+export type PlayerStat = {
+  assists: number;
+  minutes: number;
+  shots: number; // attempts at goal
+  sot: number; // attempts on target
+  yellow: number;
+  red: number;
+};
+/** Map of normalised player name → per-player aggregated stats. */
 export type PlayerStatIndex = Map<string, PlayerStat>;
 
 /** Normalise a player name for cross-feed matching. Mirrors fetch-players.mjs. */
@@ -34,7 +41,14 @@ export async function fetchPlayerStats(): Promise<PlayerStatIndex | null> {
     const map: PlayerStatIndex = new Map();
     for (const [key, v] of Object.entries(players)) {
       const stat = v as AnyObj;
-      map.set(key, { assists: Number(stat.assists) || 0, minutes: Number(stat.minutes) || 0 });
+      map.set(key, {
+        assists: Number(stat.assists) || 0,
+        minutes: Number(stat.minutes) || 0,
+        shots: Number(stat.shots) || 0,
+        sot: Number(stat.sot) || 0,
+        yellow: Number(stat.yellow) || 0,
+        red: Number(stat.red) || 0,
+      });
     }
     return map;
   } catch {

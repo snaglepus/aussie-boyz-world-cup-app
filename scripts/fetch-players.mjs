@@ -98,12 +98,16 @@ async function main() {
 
   const players = new Map(); // normName -> { name, assists, minutes }
   const shootouts = {}; // `of-${num}` -> { home: [{player, scored}], away: [...] }
-  const bump = (displayName, assists, minutes) => {
+  const bump = (displayName, inc) => {
     const key = normName(displayName);
     if (!key) return;
-    const cur = players.get(key) ?? { name: displayName, assists: 0, minutes: 0 };
-    cur.assists += assists;
-    cur.minutes += minutes;
+    const cur = players.get(key) ?? { name: displayName, assists: 0, minutes: 0, shots: 0, sot: 0, yellow: 0, red: 0 };
+    cur.assists += inc.assists;
+    cur.minutes += inc.minutes;
+    cur.shots += inc.shots;
+    cur.sot += inc.sot;
+    cur.yellow += inc.yellow;
+    cur.red += inc.red;
     players.set(key, cur);
   };
 
@@ -153,12 +157,18 @@ async function main() {
         for (const p of team?.roster ?? []) {
           const id = String(p?.athlete?.id ?? '');
           const name = p?.athlete?.displayName ?? '';
-          const assists = Number((p?.stats ?? []).find((s) => s?.name === 'goalAssists')?.value) || 0;
+          const stat = (n) => Number((p?.stats ?? []).find((s) => s?.name === n)?.value) || 0;
+          const assists = stat('goalAssists');
+          const shots = stat('totalShots');
+          const sot = stat('shotsOnTarget');
+          const yellow = stat('yellowCards');
+          const red = stat('redCards');
           let minutes = 0;
           if (p?.starter) minutes = (offMin.has(id) ? offMin.get(id) : END);
           else if (p?.subbedIn || onMin.has(id)) minutes = (offMin.has(id) ? offMin.get(id) : END) - (onMin.get(id) ?? END);
           minutes = Math.max(0, Math.min(END, minutes));
-          if (assists > 0 || minutes > 0) bump(name, assists, minutes);
+          if (minutes > 0 || assists > 0 || shots > 0 || sot > 0 || yellow > 0 || red > 0)
+            bump(name, { assists, minutes, shots, sot, yellow, red });
         }
       }
       placed += 1;
@@ -171,7 +181,12 @@ async function main() {
     updatedAt: new Date().toISOString(),
     matchesPlaced: placed,
     matchesTotal: matches.length,
-    players: Object.fromEntries([...players.entries()].map(([k, v]) => [k, { assists: v.assists, minutes: v.minutes }])),
+    players: Object.fromEntries(
+      [...players.entries()].map(([k, v]) => [
+        k,
+        { assists: v.assists, minutes: v.minutes, shots: v.shots, sot: v.sot, yellow: v.yellow, red: v.red },
+      ])
+    ),
   };
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, JSON.stringify(out));
