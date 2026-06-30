@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Card } from '../../src/components/Card';
 import { EmptyState } from '../../src/components/EmptyState';
 import { EventsTimeline } from '../../src/components/EventsTimeline';
+import { OddsBar } from '../../src/components/OddsBar';
 import { ScoreHero } from '../../src/components/ScoreHero';
 import { Shootout } from '../../src/components/Shootout';
 import { StatBars } from '../../src/components/StatBars';
@@ -80,6 +81,12 @@ export default function MatchDetail() {
             </View>
           ) : null}
         </Card>
+
+        {display.odds && display.status !== 'finished' ? (
+          <Card title={display.status === 'live' ? 'Live win probability' : 'Win probability'}>
+            <OddsBar odds={display.odds} home={display.home} away={display.away} />
+          </Card>
+        ) : null}
 
         {display.goals.length || display.cards.length ? (
           <Card title="Events">

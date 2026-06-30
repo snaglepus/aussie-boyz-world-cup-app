@@ -168,13 +168,13 @@ function MatchCard({ match }: { match: BracketMatch }) {
         {shortDate(match.kickoff, match.date)}
         {match.ground ? ` · ${city(match.ground)}` : ''}
       </Text>
-      <SideRow side={match.home} score={finished ? match.homeScore : null} pen={match.penalties?.home ?? null} penWin={!!match.penalties && match.penalties.home > match.penalties.away} />
-      <SideRow side={match.away} score={finished ? match.awayScore : null} pen={match.penalties?.away ?? null} penWin={!!match.penalties && match.penalties.away > match.penalties.home} />
+      <SideRow side={match.home} score={finished ? match.homeScore : null} pen={match.penalties?.home ?? null} penWin={!!match.penalties && match.penalties.home > match.penalties.away} proj={match.proj?.winner === 'home' ? match.proj : null} />
+      <SideRow side={match.away} score={finished ? match.awayScore : null} pen={match.penalties?.away ?? null} penWin={!!match.penalties && match.penalties.away > match.penalties.home} proj={match.proj?.winner === 'away' ? match.proj : null} />
     </Pressable>
   );
 }
 
-function SideRow({ side, score, pen, penWin }: { side: Side; score: number | null; pen?: number | null; penWin?: boolean }) {
+function SideRow({ side, score, pen, penWin, proj }: { side: Side; score: number | null; pen?: number | null; penWin?: boolean; proj?: BracketMatch['proj'] }) {
   const theme = useTheme();
   const known = !!side.team;
   const confirmed = known && side.confirmed;
@@ -199,6 +199,9 @@ function SideRow({ side, score, pen, penWin }: { side: Side; score: number | nul
           {score}
           {pen != null ? <Text style={[styles.penScore, { color: penWin ? theme.colors.accent : theme.colors.textMuted }]}> ({pen})</Text> : null}
         </Text>
+      ) : proj ? (
+        // Odds-driven projection: the favoured side's chance to go through (live in-play when in play).
+        <Text style={[styles.proj, { color: proj.live ? theme.colors.live : theme.colors.accent }]}>{proj.pct}%</Text>
       ) : null}
     </View>
   );
@@ -233,4 +236,5 @@ const styles = StyleSheet.create({
   tick: { marginLeft: -2 },
   score: { fontSize: 13, fontFamily: fonts.monoBold, minWidth: 12, textAlign: 'right' },
   penScore: { fontSize: 11, fontFamily: fonts.monoBold },
+  proj: { fontSize: 11, fontFamily: fonts.monoBold, minWidth: 26, textAlign: 'right' },
 });

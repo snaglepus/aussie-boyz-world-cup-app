@@ -1,5 +1,6 @@
 import { toTeamRef } from './countries';
-import { CardEvent, GoalEvent, Match } from './types';
+import { devig, impliedFromAmerican } from '../utils/winprob';
+import { CardEvent, GoalEvent, Match, MatchOdds } from './types';
 
 /**
  * ESPN's public, keyless scoreboard endpoint — the real-time source. Unlike
@@ -50,6 +51,7 @@ function normaliseEvent(ev: AnyObj): Match | null {
   if (homeC.team?.id != null) teamSide.set(String(homeC.team.id), 'home');
   if (awayC.team?.id != null) teamSide.set(String(awayC.team.id), 'away');
   const { goals, cards } = extractEvents(comp.details ?? [], teamSide);
+  const odds = extractOdds(comp, state);
 
   return {
     id: `espn-${ev.id ?? `${home.code}-${away.code}`}`,
@@ -68,10 +70,33 @@ function normaliseEvent(ev: AnyObj): Match | null {
     cards,
     stats: [],
     penalties: null,
+    odds,
     status: matchStatus,
     statusLabel: liveLabel(matchStatus, status),
     source: 'live',
   };
+}
+
+/**
+ * Three-way match odds from ESPN's moneyline block. We prefer the `current`
+ * (in-play) price, falling back to `close` then `open`, and de-vig the trio into
+ * a clean probability distribution. Finished games carry no odds (returns null).
+ */
+function extractOdds(comp: AnyObj, state: string): MatchOdds | null {
+  const o: AnyObj | undefined = (comp.odds ?? [])[0];
+  if (!o) return null;
+  const ml: AnyObj = o.moneyline ?? {};
+  const pick = (side: AnyObj | undefined, topFallback?: unknown): number | null => {
+    const price = side?.current?.odds ?? side?.close?.odds ?? side?.open?.odds;
+    return impliedFromAmerican(price) ?? (topFallback != null ? impliedFromAmerican(topFallback as string) : null);
+  };
+  const h = pick(ml.home);
+  const a = pick(ml.away);
+  const d = pick(ml.draw, o.drawOdds?.moneyLine);
+  if (h == null || a == null || d == null) return null;
+  const dv = devig(h, d, a);
+  if (!dv) return null;
+  return { ...dv, live: state === 'in' };
 }
 
 /** ESPN nests the country name a few ways depending on the feed. */
