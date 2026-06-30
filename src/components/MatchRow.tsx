@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Match } from '../data/types';
 import { useTheme } from '../theme/ThemeProvider';
 import { tabularNums } from '../theme/theme';
+import { penaltyWinner } from '../utils/penalties';
 import { formatKickoffTime, formatMatchDay } from '../utils/time';
 import { Flag } from './Flag';
 
@@ -22,6 +23,8 @@ export function MatchRow({ match, showDate = false }: { match: Match; showDate?:
   const showScore = live || finished;
 
   const scoreColor = live ? theme.colors.live : theme.colors.text;
+  const pens = match.penalties;
+  const pk = penaltyWinner(match);
 
   return (
     <Pressable
@@ -51,8 +54,14 @@ export function MatchRow({ match, showDate = false }: { match: Match; showDate?:
         <View style={styles.right}>
           {showScore ? (
             <View style={styles.scoreCol}>
-              <Text style={[styles.score, tabularNums, { color: scoreColor, fontFamily: theme.fonts.display }]}>{match.homeScore ?? 0}</Text>
-              <Text style={[styles.score, tabularNums, { color: scoreColor, fontFamily: theme.fonts.display }]}>{match.awayScore ?? 0}</Text>
+              <Text style={[styles.score, tabularNums, { color: scoreColor, fontFamily: theme.fonts.display }]}>
+                {match.homeScore ?? 0}
+                {pens ? <Text style={[styles.penSmall, { color: pk === 'home' ? theme.colors.accent : theme.colors.textMuted, fontFamily: theme.fonts.monoBold }]}> ({pens.home})</Text> : null}
+              </Text>
+              <Text style={[styles.score, tabularNums, { color: scoreColor, fontFamily: theme.fonts.display }]}>
+                {match.awayScore ?? 0}
+                {pens ? <Text style={[styles.penSmall, { color: pk === 'away' ? theme.colors.accent : theme.colors.textMuted, fontFamily: theme.fonts.monoBold }]}> ({pens.away})</Text> : null}
+              </Text>
             </View>
           ) : (
             <Text style={[styles.kickoff, tabularNums, { color: theme.colors.textSecondary, fontFamily: theme.fonts.mono }]}>
@@ -101,8 +110,9 @@ const styles = StyleSheet.create({
   teamLine: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   teamName: { fontSize: 15, fontWeight: '600', flexShrink: 1 },
   right: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  scoreCol: { alignItems: 'center', gap: 10, minWidth: 18 },
+  scoreCol: { alignItems: 'flex-end', gap: 10, minWidth: 18 },
   score: { fontSize: 16, fontWeight: '800' },
+  penSmall: { fontSize: 12, fontWeight: '700' },
   kickoff: { fontSize: 14, fontWeight: '600', minWidth: 52, textAlign: 'right' },
   statusCol: { alignItems: 'center', width: 34 },
   liveLabel: { fontSize: 10, fontWeight: '800' },

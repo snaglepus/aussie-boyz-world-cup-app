@@ -222,7 +222,21 @@ function MatchHistory({ matches, ref_ }: { matches: Match[]; ref_: TeamRef }) {
         const oppScore = isHome ? m.awayScore : m.homeScore;
         const finished = m.status === 'finished' && myScore != null && oppScore != null;
         const live = m.status === 'live';
-        const res = finished ? (myScore! > oppScore! ? 'W' : myScore! < oppScore! ? 'L' : 'D') : null;
+        // A level game decided on penalties counts as a win/loss for this team.
+        const myPen = isHome ? m.penalties?.home : m.penalties?.away;
+        const oppPen = isHome ? m.penalties?.away : m.penalties?.home;
+        const pensShown = finished && m.penalties != null;
+        const res = finished
+          ? myScore! > oppScore!
+            ? 'W'
+            : myScore! < oppScore!
+              ? 'L'
+              : pensShown
+                ? myPen! > oppPen!
+                  ? 'W'
+                  : 'L'
+                : 'D'
+          : null;
         const venue = resolveVenue(m.ground);
         const scorers = m.goals.filter((g) => (g.team === 'home') === isHome);
         return (
@@ -242,6 +256,7 @@ function MatchHistory({ matches, ref_ }: { matches: Match[]; ref_: TeamRef }) {
               </Text>
               <Text style={[styles.matchScore, tabularNums, { color: theme.colors.text }]}>
                 {finished || live ? `${myScore ?? 0}–${oppScore ?? 0}` : timeOf(m)}
+                {pensShown ? <Text style={[styles.matchPens, { color: theme.colors.textMuted }]}>{` (${myPen}–${oppPen} p)`}</Text> : null}
               </Text>
             </View>
             <Text style={[styles.matchMeta, { color: theme.colors.textMuted }]} numberOfLines={1}>
@@ -388,6 +403,7 @@ const styles = StyleSheet.create({
   matchTop: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   oppName: { flex: 1, fontSize: 14, fontFamily: fonts.bodyBold },
   matchScore: { fontSize: 15, fontFamily: fonts.monoBold },
+  matchPens: { fontSize: 12, fontFamily: fonts.mono },
   matchMeta: { fontSize: 11, fontFamily: fonts.mono },
   scorers: { fontSize: 12, fontFamily: fonts.body },
   badge: { minWidth: 26, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, alignItems: 'center' },

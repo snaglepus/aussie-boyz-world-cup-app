@@ -168,13 +168,13 @@ function MatchCard({ match }: { match: BracketMatch }) {
         {shortDate(match.kickoff, match.date)}
         {match.ground ? ` · ${city(match.ground)}` : ''}
       </Text>
-      <SideRow side={match.home} score={finished ? match.homeScore : null} />
-      <SideRow side={match.away} score={finished ? match.awayScore : null} />
+      <SideRow side={match.home} score={finished ? match.homeScore : null} pen={match.penalties?.home ?? null} penWin={!!match.penalties && match.penalties.home > match.penalties.away} />
+      <SideRow side={match.away} score={finished ? match.awayScore : null} pen={match.penalties?.away ?? null} penWin={!!match.penalties && match.penalties.away > match.penalties.home} />
     </Pressable>
   );
 }
 
-function SideRow({ side, score }: { side: Side; score: number | null }) {
+function SideRow({ side, score, pen, penWin }: { side: Side; score: number | null; pen?: number | null; penWin?: boolean }) {
   const theme = useTheme();
   const known = !!side.team;
   const confirmed = known && side.confirmed;
@@ -195,7 +195,10 @@ function SideRow({ side, score }: { side: Side; score: number | null }) {
         <Ionicons name="checkmark-circle" size={13} color={theme.colors.accent} style={styles.tick} />
       ) : null}
       {score != null ? (
-        <Text style={[styles.score, { color: theme.colors.text }]}>{score}</Text>
+        <Text style={[styles.score, { color: theme.colors.text }]}>
+          {score}
+          {pen != null ? <Text style={[styles.penScore, { color: penWin ? theme.colors.accent : theme.colors.textMuted }]}> ({pen})</Text> : null}
+        </Text>
       ) : null}
     </View>
   );
@@ -229,4 +232,5 @@ const styles = StyleSheet.create({
   sideName: { fontSize: 12.5, lineHeight: 16, flex: 1 },
   tick: { marginLeft: -2 },
   score: { fontSize: 13, fontFamily: fonts.monoBold, minWidth: 12, textAlign: 'right' },
+  penScore: { fontSize: 11, fontFamily: fonts.monoBold },
 });

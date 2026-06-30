@@ -61,6 +61,8 @@ export type BracketMatch = {
   away: Side;
   homeScore: number | null;
   awayScore: number | null;
+  /** Shootout totals when the tie was decided on penalties, else null. */
+  penalties: { home: number; away: number } | null;
   status: MatchStatus;
   statusLabel: string;
   /** Vertical position (in Round-of-32 row units) from the real feeder tree, so
@@ -235,6 +237,7 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
           away: r.away,
           homeScore: m.homeScore,
           awayScore: m.awayScore,
+          penalties: m.penalties,
           status: m.status,
           statusLabel: m.statusLabel,
           row: rowByNum.get(numOf(m)) ?? 0,

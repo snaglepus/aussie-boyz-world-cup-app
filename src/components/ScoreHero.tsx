@@ -5,6 +5,7 @@ import { Match, TeamRef } from '../data/types';
 import { useTheme } from '../theme/ThemeProvider';
 import { tabularNums } from '../theme/theme';
 import { canOpenTeam, teamHref } from '../utils/nav';
+import { penaltyWinner } from '../utils/penalties';
 import { formatKickoffTime } from '../utils/time';
 import { Flag } from './Flag';
 import { LiveBadge } from './LiveBadge';
@@ -17,6 +18,8 @@ export function ScoreHero({ match }: { match: Match }) {
   const finished = match.status === 'finished';
   const showScore = live || finished;
   const scoreColor = live ? theme.colors.live : theme.colors.text;
+  const pens = match.penalties;
+  const pk = penaltyWinner(match);
 
   // Each side links to that team's profile on the Teams tab (skip placeholders).
   const renderSide = (team: TeamRef) => {
@@ -43,7 +46,7 @@ export function ScoreHero({ match }: { match: Match }) {
           <LiveBadge label={match.statusLabel} />
         ) : (
           <Text style={[styles.statusText, { color: theme.colors.textMuted, fontFamily: theme.fonts.mono }]}>
-            {finished ? 'FULL TIME' : formatKickoffTime(match.kickoff ? new Date(match.kickoff) : null)}
+            {finished ? (pens ? 'FULL TIME (P)' : 'FULL TIME') : formatKickoffTime(match.kickoff ? new Date(match.kickoff) : null)}
           </Text>
         )}
       </View>
@@ -54,16 +57,22 @@ export function ScoreHero({ match }: { match: Match }) {
         <View style={styles.center}>
           {showScore ? (
             <Text style={[styles.score, tabularNums, { color: scoreColor, fontFamily: theme.fonts.display }]}>
-              {match.homeScore ?? 0}
+              <Text style={{ color: pk === 'home' ? theme.colors.accent : scoreColor }}>
+                {match.homeScore ?? 0}
+                {pens ? <Text style={styles.penInline}> ({pens.home})</Text> : null}
+              </Text>
               <Text style={{ color: theme.colors.textMuted }}> – </Text>
-              {match.awayScore ?? 0}
+              <Text style={{ color: pk === 'away' ? theme.colors.accent : scoreColor }}>
+                {pens ? <Text style={styles.penInline}>({pens.away}) </Text> : null}
+                {match.awayScore ?? 0}
+              </Text>
             </Text>
           ) : (
             <Text style={[styles.vs, { color: theme.colors.textMuted, fontFamily: theme.fonts.heading }]}>vs</Text>
           )}
-          {match.penalties ? (
+          {pens ? (
             <Text style={[styles.pens, { color: theme.colors.textSecondary, fontFamily: theme.fonts.mono }]}>
-              ({match.penalties.home}–{match.penalties.away} pens)
+              {pk ? `${(pk === 'home' ? match.home : match.away).name} win ${Math.max(pens.home, pens.away)}–${Math.min(pens.home, pens.away)} on penalties` : 'Decided on penalties'}
             </Text>
           ) : match.htScore ? (
             <Text style={[styles.ht, { color: theme.colors.textMuted, fontFamily: theme.fonts.mono }]}>
@@ -93,6 +102,7 @@ const styles = StyleSheet.create({
   team: { fontSize: 15, fontWeight: '700', textAlign: 'center' },
   center: { alignItems: 'center', justifyContent: 'center', minWidth: 120, gap: 4, paddingTop: 14 },
   score: { fontSize: 44, fontWeight: '800', letterSpacing: -1 },
+  penInline: { fontSize: 20, fontWeight: '800', letterSpacing: 0 },
   vs: { fontSize: 22, fontWeight: '700' },
   ht: { fontSize: 12, fontWeight: '600' },
   pens: { fontSize: 13, fontWeight: '700' },
