@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Match } from '../data/types';
+import { GoalEvent, Match } from '../data/types';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts, tabularNums } from '../theme/theme';
 
@@ -17,8 +17,13 @@ type TimelineItem = {
 export function EventsTimeline({ match }: { match: Match }) {
   const theme = useTheme();
 
+  // Shootout kicks come through as penalty "goals" at 120'; they belong to the
+  // dedicated Penalty shootout card, so keep them out of the chronological timeline.
+  const inOpenPlay = (g: GoalEvent) =>
+    !(match.penalties && g.penalty && minuteValue(g.minute) >= 120);
+
   const items: TimelineItem[] = [
-    ...match.goals.map<TimelineItem>((g) => ({
+    ...match.goals.filter(inOpenPlay).map<TimelineItem>((g) => ({
       minute: g.minute,
       minuteValue: minuteValue(g.minute),
       team: g.team,
