@@ -218,11 +218,14 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
         loser = homeWins ? away.team : home.team;
         decided = true;
       }
-    } else if (home.team && away.team) {
-      // Not decided yet → project a side through (a guess, see banner). Prefer the
-      // match's own odds: in play these are ESPN's live price, so the bracket shifts
-      // with the game. With no line, fall back to the strength model — nudged by the
-      // live scoreline if the match is under way.
+    }
+    if (!decided && home.team && away.team) {
+      // Not decided yet → project a side through (a guess, see banner). This also
+      // covers the brief window when a tie is "finished" but level and the shootout
+      // result hasn't reached the feed, so we still show a projected advancer rather
+      // than a bare "Winner M##" placeholder. Prefer the match's own odds: in play
+      // these are ESPN's live price, so the bracket shifts with the game. With no
+      // line, fall back to the strength model — nudged by the live scoreline.
       let pHome: number; // home's chance of advancing, 0–1
       if (m.odds) {
         const ap = advanceProb(m.odds);
