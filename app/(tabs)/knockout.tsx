@@ -46,8 +46,9 @@ export default function KnockoutScreen() {
             </Text>
             <View style={styles.legendRow}>
               <Ionicons name="checkmark-circle" size={13} color={theme.colors.accent} />
-              <Text style={[styles.legendText, { color: theme.colors.text }]}>Confirmed</Text>
-              <Text style={[styles.legendText, { color: theme.colors.textSecondary }]}>· others are projected</Text>
+              <Text style={[styles.legendText, { color: theme.colors.text }]}>Winner</Text>
+              <Text style={[styles.legendText, { color: theme.colors.accent }]}>· Favourite</Text>
+              <Text style={[styles.legendText, { color: theme.colors.textSecondary }]}>· others projected</Text>
             </View>
           </View>
         </View>
@@ -147,10 +148,20 @@ function Connectors({ rounds, color }: { rounds: BracketColumn[]; color: string 
   return <>{lines}</>;
 }
 
+/** How to render a side: the decided winner, the projected favourite, or neither. */
+type Emphasis = 'win' | 'fav' | 'none';
+
 function MatchCard({ match }: { match: BracketMatch }) {
   const theme = useTheme();
   const router = useRouter();
   const finished = match.status === 'finished';
+  const emph = (side: 'home' | 'away'): Emphasis =>
+    match.lead !== side ? 'none' : match.decided ? 'win' : 'fav';
+
+  // Once both feeders' match-ups are locked we show the two teams and highlight
+  // the favourite; until then a single predicted team stands in for the tie.
+  const single = !match.dual;
+  const leadSide = match.lead === 'away' ? match.away : match.home;
 
   return (
     <Pressable
@@ -168,18 +179,42 @@ function MatchCard({ match }: { match: BracketMatch }) {
         {shortDate(match.kickoff, match.date)}
         {match.ground ? ` · ${city(match.ground)}` : ''}
       </Text>
-      <SideRow side={match.home} score={finished ? match.homeScore : null} pen={match.penalties?.home ?? null} penWin={!!match.penalties && match.penalties.home > match.penalties.away} proj={match.proj?.winner === 'home' ? match.proj : null} />
-      <SideRow side={match.away} score={finished ? match.awayScore : null} pen={match.penalties?.away ?? null} penWin={!!match.penalties && match.penalties.away > match.penalties.home} proj={match.proj?.winner === 'away' ? match.proj : null} />
+      {single ? (
+        <SideRow
+          side={leadSide}
+          score={null}
+          emphasis="none"
+          proj={match.proj && match.proj.winner === match.lead ? match.proj : null}
+        />
+      ) : (
+        <>
+          <SideRow side={match.home} score={finished ? match.homeScore : null} pen={match.penalties?.home ?? null} penWin={!!match.penalties && match.penalties.home > match.penalties.away} proj={match.proj?.winner === 'home' ? match.proj : null} emphasis={emph('home')} />
+          <SideRow side={match.away} score={finished ? match.awayScore : null} pen={match.penalties?.away ?? null} penWin={!!match.penalties && match.penalties.away > match.penalties.home} proj={match.proj?.winner === 'away' ? match.proj : null} emphasis={emph('away')} />
+        </>
+      )}
     </Pressable>
   );
 }
 
-function SideRow({ side, score, pen, penWin, proj }: { side: Side; score: number | null; pen?: number | null; penWin?: boolean; proj?: BracketMatch['proj'] }) {
+function SideRow({
+  side,
+  score,
+  pen,
+  penWin,
+  proj,
+  emphasis = 'none',
+}: {
+  side: Side;
+  score: number | null;
+  pen?: number | null;
+  penWin?: boolean;
+  proj?: BracketMatch['proj'];
+  emphasis?: Emphasis;
+}) {
   const theme = useTheme();
   const known = !!side.team;
-  const confirmed = known && side.confirmed;
-  // Confirmed teams render strong; projected (estimated) ones are muted; TBD is faint.
-  const color = confirmed ? theme.colors.text : known ? theme.colors.textSecondary : theme.colors.textMuted;
+  const highlight = emphasis !== 'none'; // winner or favourite → lime + bold
+  const color = highlight ? theme.colors.accent : known ? theme.colors.textSecondary : theme.colors.textMuted;
 
   return (
     <View style={styles.side}>
@@ -188,10 +223,10 @@ function SideRow({ side, score, pen, penWin, proj }: { side: Side; score: number
       ) : (
         <View style={[styles.tbdDot, { backgroundColor: theme.colors.surfaceAlt, borderColor: theme.colors.border }]} />
       )}
-      <Text numberOfLines={1} style={[styles.sideName, { color, fontFamily: confirmed ? fonts.bodyBold : fonts.bodyMedium }]}>
+      <Text numberOfLines={1} style={[styles.sideName, { color, fontFamily: highlight ? fonts.bodyBold : fonts.bodyMedium }]}>
         {side.label}
       </Text>
-      {confirmed ? (
+      {emphasis === 'win' ? (
         <Ionicons name="checkmark-circle" size={13} color={theme.colors.accent} style={styles.tick} />
       ) : null}
       {score != null ? (
