@@ -75,6 +75,13 @@ export type BracketMatch = {
   /** Projected advancer + their advance chance from this tie's odds, when the
    * result isn't in yet and a bookmaker line exists. `live` ⇒ in-play price. */
   proj?: { winner: 'home' | 'away'; pct: number; live: boolean } | null;
+  /** True once this tie has a real result (winner is the decided one). */
+  decided: boolean;
+  /** Side to emphasise: the winner once decided, else the projected favourite. */
+  lead: 'home' | 'away' | null;
+  /** Both participants are set (their feeder match-ups are locked) → show the two
+   * teams with the favourite highlighted. False ⇒ show only the predicted team. */
+  dual: boolean;
 };
 
 export type BracketColumn = { round: KnockoutRound; matches: BracketMatch[] };
@@ -264,6 +271,23 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
             live: m.odds.live,
           };
         }
+        // Emphasise the winner (decided) or the projected favourite (not yet).
+        const lead: BracketMatch['lead'] = r.winner
+          ? r.winner === r.home.team
+            ? 'home'
+            : r.winner === r.away.team
+              ? 'away'
+              : null
+          : null;
+        // Show both teams once each feeder's match-up is locked (both its
+        // participants are real); Round-of-32 ties are locked by definition.
+        const fs = feedersOf(m);
+        const dual = fs.length
+          ? fs.every((f) => {
+              const fr = resolveMatch(numOf(f));
+              return fr.home.confirmed && fr.away.confirmed;
+            })
+          : r.home.confirmed && r.away.confirmed;
         return {
           id: m.id,
           round,
@@ -280,6 +304,9 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
           row: rowByNum.get(numOf(m)) ?? 0,
           feeders: feedersOf(m).map((f) => f.id),
           proj,
+          decided: r.decided,
+          lead,
+          dual,
         };
       });
     return { round, matches };
