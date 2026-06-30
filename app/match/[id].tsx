@@ -81,15 +81,15 @@ export default function MatchDetail() {
           ) : null}
         </Card>
 
-        {display.penalties && shootouts?.get(matchId) ? (
-          <Card title="Penalty shootout">
-            <Shootout shootout={shootouts.get(matchId)!} home={display.home} away={display.away} />
-          </Card>
-        ) : null}
-
         {display.goals.length || display.cards.length ? (
           <Card title="Events">
             <EventsTimeline match={display} />
+          </Card>
+        ) : null}
+
+        {display.penalties && shootouts?.get(matchId) ? (
+          <Card title="Penalty shootout">
+            <Shootout shootout={shootouts.get(matchId)!} home={display.home} away={display.away} />
           </Card>
         ) : null}
 
