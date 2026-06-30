@@ -16,6 +16,14 @@ const OPENFOOTBALL = 'https://raw.githubusercontent.com/openfootball/worldcup.js
 const SCOREBOARD = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard';
 const SUMMARY = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary';
 const OUT = path.resolve('dist', 'players-stats.json');
+const OUT_SHOOTOUTS = path.resolve('dist', 'shootouts.json');
+
+// "Kai Havertz" → "K. Havertz"; single names pass through unchanged.
+function shortName(full) {
+  const parts = String(full ?? '').trim().split(/\s+/);
+  if (parts.length < 2) return parts[0] ?? '';
+  return `${parts[0][0]}. ${parts.slice(1).join(' ')}`;
+}
 
 /** Shared with the client (src/data/playerStats.ts) — keep identical. */
 function normName(s) {
@@ -89,6 +97,7 @@ async function main() {
   };
 
   const players = new Map(); // normName -> { name, assists, minutes }
+  const shootouts = {}; // `of-${num}` -> { home: [{player, scored}], away: [...] }
   const bump = (displayName, assists, minutes) => {
     const key = normName(displayName);
     if (!key) return;
@@ -112,6 +121,20 @@ async function main() {
       });
       if (!ev) continue;
       const sum = await getJson(`${SUMMARY}?event=${ev.id}`);
+
+      // Penalty shootout takers, in order, mapped to this match's home/away side.
+      if (Array.isArray(sum?.shootout) && sum.shootout.length && m.num != null) {
+        const entry = {};
+        for (const block of sum.shootout) {
+          const side = sameTeam(t1, block?.team) ? 'home' : sameTeam(t2, block?.team) ? 'away' : null;
+          if (!side) continue;
+          entry[side] = (block.shots ?? [])
+            .slice()
+            .sort((a, b) => (a?.shotNumber ?? 0) - (b?.shotNumber ?? 0))
+            .map((s) => ({ player: shortName(s?.player), scored: s?.didScore === true }));
+        }
+        if (entry.home || entry.away) shootouts[`of-${m.num}`] = entry;
+      }
 
       // Substitution clocks: participants[0] comes on, participants[1] goes off.
       const onMin = new Map();
@@ -153,6 +176,9 @@ async function main() {
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, JSON.stringify(out));
   console.log(`[players] Wrote ${OUT}: ${players.size} players from ${placed}/${matches.length} matches.`);
+
+  fs.writeFileSync(OUT_SHOOTOUTS, JSON.stringify({ updatedAt: new Date().toISOString(), shootouts }));
+  console.log(`[players] Wrote ${OUT_SHOOTOUTS}: ${Object.keys(shootouts).length} shootouts.`);
 }
 
 main()
