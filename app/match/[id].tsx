@@ -8,6 +8,7 @@ import { CommentaryFeed } from '../../src/components/CommentaryFeed';
 import { EmptyState } from '../../src/components/EmptyState';
 import { EventsTimeline } from '../../src/components/EventsTimeline';
 import { Lineups } from '../../src/components/Lineups';
+import { MatchInfo } from '../../src/components/MatchInfo';
 import { OddsBar } from '../../src/components/OddsBar';
 import { ScoreHero } from '../../src/components/ScoreHero';
 import { Shootout } from '../../src/components/Shootout';
@@ -22,7 +23,6 @@ import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { fonts } from '../../src/theme/theme';
 import { buildBracket } from '../../src/utils/bracket';
-import { formatMatchDay } from '../../src/utils/time';
 
 export default function MatchDetail() {
   const theme = useTheme();
@@ -131,20 +131,7 @@ export default function MatchDetail() {
         ) : null}
 
         <Card title="Match info">
-          <InfoRow icon="trophy-outline" label={match.group ? `${match.group} · ${match.round}` : match.round} />
-          <InfoRow icon="calendar-outline" label={formatMatchDay(match.kickoff ? new Date(match.kickoff) : null, match.date)} />
-          <InfoRow
-            icon="location-outline"
-            label={venue ? `${venue.stadium} · ${venue.city}` : match.ground ?? 'Venue TBC'}
-            last={!venue}
-          />
-          {venue ? (
-            <InfoRow
-              icon={match.source === 'live' ? 'flash-outline' : 'cloud-download-outline'}
-              label={match.source === 'live' ? 'Real-time data' : 'Schedule & results feed'}
-              last
-            />
-          ) : null}
+          <MatchInfo match={match} venue={venue} />
         </Card>
 
         {venue ? (
@@ -157,29 +144,9 @@ export default function MatchDetail() {
   );
 }
 
-function InfoRow({
-  icon,
-  label,
-  last,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  last?: boolean;
-}) {
-  const theme = useTheme();
-  return (
-    <View style={[styles.infoRow, !last && { borderBottomColor: theme.colors.hairline, borderBottomWidth: StyleSheet.hairlineWidth }]}>
-      <Ionicons name={icon} size={18} color={theme.colors.textMuted} />
-      <Text style={[styles.infoText, { color: theme.colors.text }]}>{label}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   body: { padding: 16, paddingBottom: 40 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
-  infoText: { fontSize: 15, fontFamily: fonts.bodyMedium, flex: 1 },
   estChip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 10, borderRadius: 10, marginTop: 4 },
   estText: { fontSize: 12, fontFamily: fonts.mono },
 });
