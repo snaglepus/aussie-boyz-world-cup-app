@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SubEvent } from '../data/espnStats';
 import { GoalEvent, Match } from '../data/types';
 import { useTheme } from '../theme/ThemeProvider';
@@ -18,6 +18,9 @@ type TimelineItem = {
 /** Chronological match events (goals + cards, plus subs when provided), home left / away right. */
 export function EventsTimeline({ match, subs }: { match: Match; subs?: SubEvent[] }) {
   const theme = useTheme();
+  // Subs make the timeline busy, so hide them behind a toggle (off by default).
+  const [showSubs, setShowSubs] = useState(false);
+  const hasSubs = (subs?.length ?? 0) > 0;
 
   // Shootout kicks come through as penalty "goals" at 120'; they belong to the
   // dedicated Penalty shootout card, so keep them out of the chronological timeline.
@@ -39,7 +42,7 @@ export function EventsTimeline({ match, subs }: { match: Match; subs?: SubEvent[
       kind: c.color,
       text: c.name,
     })),
-    ...(subs ?? []).map<TimelineItem>((s) => ({
+    ...(showSubs ? subs ?? [] : []).map<TimelineItem>((s) => ({
       minute: s.minute,
       minuteValue: minuteValue(s.minute),
       team: s.team,
@@ -49,7 +52,7 @@ export function EventsTimeline({ match, subs }: { match: Match; subs?: SubEvent[
     })),
   ].sort((a, b) => a.minuteValue - b.minuteValue);
 
-  if (!items.length) {
+  if (!items.length && !hasSubs) {
     return <Text style={[styles.none, { color: theme.colors.textMuted }]}>No events recorded yet.</Text>;
   }
 
@@ -68,6 +71,22 @@ export function EventsTimeline({ match, subs }: { match: Match; subs?: SubEvent[
           </View>
         </View>
       ))}
+
+      {hasSubs ? (
+        <Pressable
+          hitSlop={6}
+          onPress={(e) => {
+            (e as unknown as { stopPropagation?: () => void })?.stopPropagation?.();
+            setShowSubs((s) => !s);
+          }}
+          style={({ pressed }) => [styles.subToggle, { borderColor: theme.colors.border, opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Ionicons name="swap-horizontal" size={13} color={theme.colors.textSecondary} />
+          <Text style={[styles.subToggleText, { color: theme.colors.textSecondary }]}>
+            {showSubs ? 'Hide substitutions' : `Show substitutions (${subs!.length})`}
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -133,4 +152,16 @@ const styles = StyleSheet.create({
   subTextRight: { alignItems: 'flex-start' },
   subOff: { fontSize: 11, fontFamily: fonts.mono, marginTop: 1 },
   card: { width: 11, height: 15, borderRadius: 2 },
+  subToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    gap: 6,
+    marginTop: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  subToggleText: { fontSize: 11, fontFamily: fonts.mono, letterSpacing: 0.3 },
 });
