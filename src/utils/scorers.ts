@@ -31,6 +31,7 @@ export type ScorerRow = {
   sot: number; // attempts on target (0 when unknown)
   yellow: number;
   red: number;
+  jersey: number | null; // squad number, null when unknown
   hasStats: boolean; // a snapshot row matched this player (extra columns are real)
   events: GoalDetail[]; // every goal, oldest → newest
 };
@@ -78,6 +79,7 @@ export function buildGoldenBoot(matches: Match[], stats?: PlayerStatIndex | null
       sot: s?.sot ?? 0,
       yellow: s?.yellow ?? 0,
       red: s?.red ?? 0,
+      jersey: s?.jersey ?? null,
       hasStats: !!s,
     };
   });
@@ -115,6 +117,7 @@ export function buildGoldenBoot(matches: Match[], stats?: PlayerStatIndex | null
       sot: r.sot,
       yellow: r.yellow,
       red: r.red,
+      jersey: r.jersey,
       hasStats: r.hasStats,
       events: r.events,
     };

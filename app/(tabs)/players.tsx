@@ -184,6 +184,15 @@ function ScorerCard({
 
       {open ? (
         <View style={[styles.goalList, { borderTopColor: theme.colors.hairline }]}>
+          <View style={styles.bio}>
+            <Text numberOfLines={2} style={[styles.bioName, { color: theme.colors.text, fontFamily: fonts.bodyBold }]}>
+              {row.player}
+            </Text>
+            <Text numberOfLines={1} style={[styles.bioMeta, { color: theme.colors.textSecondary, fontFamily: fonts.mono }]}>
+              {row.jersey != null ? `#${row.jersey} · ` : ''}
+              {row.team.name}
+            </Text>
+          </View>
           {row.events.map((e, i) => (
             <Pressable
               key={`${e.matchId}-${i}`}
@@ -243,6 +252,9 @@ const styles = StyleSheet.create({
   statCell: { width: CELL_W, fontSize: 14, textAlign: 'center' },
   chev: { width: CHEV_W, alignItems: 'center', justifyContent: 'center' },
   goalList: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 14, paddingVertical: 4 },
+  bio: { paddingTop: 10, paddingBottom: 6 },
+  bioName: { fontSize: 15 },
+  bioMeta: { fontSize: 11, marginTop: 2 },
   goalRow: { flexDirection: 'row', alignItems: 'center', gap: 9, paddingVertical: 7 },
   goalIdx: { width: 14, fontSize: 11, textAlign: 'center' },
   goalOpp: { flex: 1, fontSize: 13 },

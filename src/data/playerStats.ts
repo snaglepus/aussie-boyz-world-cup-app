@@ -14,6 +14,7 @@ export type PlayerStat = {
   sot: number; // attempts on target
   yellow: number;
   red: number;
+  jersey: number | null; // squad number
 };
 /** Map of normalised player name → per-player aggregated stats. */
 export type PlayerStatIndex = Map<string, PlayerStat>;
@@ -48,6 +49,7 @@ export async function fetchPlayerStats(): Promise<PlayerStatIndex | null> {
         sot: Number(stat.sot) || 0,
         yellow: Number(stat.yellow) || 0,
         red: Number(stat.red) || 0,
+        jersey: stat.jersey == null ? null : Number(stat.jersey) || null,
       });
     }
     return map;
