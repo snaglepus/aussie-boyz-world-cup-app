@@ -3,8 +3,11 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Card } from '../../src/components/Card';
+import { Collapsible } from '../../src/components/Collapsible';
+import { CommentaryFeed } from '../../src/components/CommentaryFeed';
 import { EmptyState } from '../../src/components/EmptyState';
 import { EventsTimeline } from '../../src/components/EventsTimeline';
+import { Lineups } from '../../src/components/Lineups';
 import { OddsBar } from '../../src/components/OddsBar';
 import { ScoreHero } from '../../src/components/ScoreHero';
 import { Shootout } from '../../src/components/Shootout';
@@ -88,9 +91,9 @@ export default function MatchDetail() {
           </Card>
         ) : null}
 
-        {display.goals.length || display.cards.length ? (
+        {display.goals.length || display.cards.length || fetchedDetail?.subs.length ? (
           <Card title="Events">
-            <EventsTimeline match={display} />
+            <EventsTimeline match={display} subs={fetchedDetail?.subs} />
           </Card>
         ) : null}
 
@@ -103,6 +106,27 @@ export default function MatchDetail() {
         {display.stats.length ? (
           <Card title="Match stats">
             <StatBars stats={display.stats} />
+          </Card>
+        ) : null}
+
+        {fetchedDetail?.lineups ? (
+          <Card>
+            <Collapsible title="Lineups">
+              <Lineups
+                home={fetchedDetail.lineups.home}
+                away={fetchedDetail.lineups.away}
+                homeTeam={display.home}
+                awayTeam={display.away}
+              />
+            </Collapsible>
+          </Card>
+        ) : null}
+
+        {fetchedDetail?.commentary.length ? (
+          <Card>
+            <Collapsible title="Commentary">
+              <CommentaryFeed items={fetchedDetail.commentary} limit={40} />
+            </Collapsible>
           </Card>
         ) : null}
 
