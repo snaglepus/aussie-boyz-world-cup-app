@@ -1,10 +1,21 @@
 import { toTeamRef } from './countries';
 import { CardEvent, MatchStats } from './types';
 
+export type SubEvent = { minute: string; team: 'home' | 'away'; on: string; off: string };
+export type LineupPlayer = { name: string; jersey: string; pos: string; starter: boolean };
+export type TeamLineup = { formation: string; players: LineupPlayer[] };
+export type CommentaryItem = { minute: string; text: string };
+
 export type EspnMatchDetail = {
   stats: MatchStats[];
   /** Card events parsed from the summary, used when the base feed has none. */
   cards: CardEvent[];
+  /** Substitutions (in / out + minute), for the live events timeline. */
+  subs: SubEvent[];
+  /** Starting XIs + formation per side, or null when unavailable. */
+  lineups: { home: TeamLineup; away: TeamLineup } | null;
+  /** Running play-by-play, oldest → newest. */
+  commentary: CommentaryItem[];
 };
 
 /**
@@ -108,7 +119,11 @@ export async function fetchEspnMatchStats(
     add('Possession', 'possessionPct', true);
     add('Shots', 'totalShots');
     add('On target', 'shotsOnTarget');
+    add('Passes', 'totalPasses');
+    add('Pass accuracy', 'passPct', true);
+    add('Crosses', 'totalCrosses');
     add('Corners', 'wonCorners');
+    add('Offsides', 'offsides');
     add('Fouls', 'foulsCommitted');
     add('Yellow cards', 'yellowCards');
     add('Red cards', 'redCards');
@@ -116,12 +131,59 @@ export async function fetchEspnMatchStats(
     const cards = parseCards(sum, home.team?.id, away.team?.id).sort(
       (x, y) => minuteNum(x.minute) - minuteNum(y.minute)
     );
+    const subs = parseSubs(sum, home.team?.id, away.team?.id);
+    const lineups = parseLineups(sum);
+    const commentary = parseCommentary(sum);
 
-    if (!rows.length && !cards.length) return null;
-    return { stats: rows, cards };
+    if (!rows.length && !cards.length && !subs.length && !lineups && !commentary.length) return null;
+    return { stats: rows, cards, subs, lineups, commentary };
   } catch {
     return null;
   }
+}
+
+/** Substitutions from keyEvents: participants[0] comes on, participants[1] goes off. */
+function parseSubs(sum: AnyObj, homeId?: string, awayId?: string): SubEvent[] {
+  const out: SubEvent[] = [];
+  for (const ev of sum?.keyEvents ?? []) {
+    if (!/substitution/i.test(ev?.type?.text ?? '')) continue;
+    const teamId = String(ev?.team?.id ?? '');
+    const team: 'home' | 'away' | null =
+      teamId === String(homeId) ? 'home' : teamId === String(awayId) ? 'away' : null;
+    if (!team) continue;
+    const on = ev?.participants?.[0]?.athlete?.displayName ?? '';
+    const off = ev?.participants?.[1]?.athlete?.displayName ?? '';
+    const minute = String(ev?.clock?.displayValue ?? '').replace(/'/g, '').trim();
+    if (on || off) out.push({ minute, team, on, off });
+  }
+  return out.sort((a, b) => minuteNum(a.minute) - minuteNum(b.minute));
+}
+
+/** Starting XIs + formation from the summary rosters (mapped by homeAway). */
+function parseLineups(sum: AnyObj): { home: TeamLineup; away: TeamLineup } | null {
+  const rosters: AnyObj[] = sum?.rosters ?? [];
+  const build = (r: AnyObj): TeamLineup => ({
+    formation: String(r?.formation ?? ''),
+    players: (r?.roster ?? [])
+      .map((p: AnyObj) => ({
+        name: p?.athlete?.displayName ?? '',
+        jersey: String(p?.jersey ?? ''),
+        pos: String(p?.position?.abbreviation ?? ''),
+        starter: p?.starter === true,
+      }))
+      .filter((p: LineupPlayer) => p.name),
+  });
+  const home = rosters.find((r) => r?.homeAway === 'home');
+  const away = rosters.find((r) => r?.homeAway === 'away');
+  if (!home || !away) return null;
+  return { home: build(home), away: build(away) };
+}
+
+/** Running commentary (oldest → newest), minute + text. */
+function parseCommentary(sum: AnyObj): CommentaryItem[] {
+  return (sum?.commentary ?? [])
+    .map((x: AnyObj) => ({ minute: String(x?.time?.displayValue ?? '').replace(/'/g, '').trim(), text: String(x?.text ?? '') }))
+    .filter((x: CommentaryItem) => x.text);
 }
 
 function minuteNum(minute: string): number {

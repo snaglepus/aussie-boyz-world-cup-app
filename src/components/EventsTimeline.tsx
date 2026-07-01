@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { SubEvent } from '../data/espnStats';
 import { GoalEvent, Match } from '../data/types';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts, tabularNums } from '../theme/theme';
@@ -9,12 +10,13 @@ type TimelineItem = {
   minute: string;
   minuteValue: number;
   team: 'home' | 'away';
-  kind: 'goal' | 'yellow' | 'red';
+  kind: 'goal' | 'yellow' | 'red' | 'sub';
   text: string;
+  subOff?: string; // player replaced (for kind 'sub')
 };
 
-/** Chronological match events (goals + cards), home on the left, away on the right. */
-export function EventsTimeline({ match }: { match: Match }) {
+/** Chronological match events (goals + cards, plus subs when provided), home left / away right. */
+export function EventsTimeline({ match, subs }: { match: Match; subs?: SubEvent[] }) {
   const theme = useTheme();
 
   // Shootout kicks come through as penalty "goals" at 120'; they belong to the
@@ -36,6 +38,14 @@ export function EventsTimeline({ match }: { match: Match }) {
       team: c.team,
       kind: c.color,
       text: c.name,
+    })),
+    ...(subs ?? []).map<TimelineItem>((s) => ({
+      minute: s.minute,
+      minuteValue: minuteValue(s.minute),
+      team: s.team,
+      kind: 'sub',
+      text: s.on,
+      subOff: s.off,
     })),
   ].sort((a, b) => a.minuteValue - b.minuteValue);
 
@@ -67,6 +77,8 @@ function Event({ item, align }: { item: TimelineItem; align: 'left' | 'right' })
   const icon =
     item.kind === 'goal' ? (
       <Ionicons name="football" size={15} color={theme.colors.text} />
+    ) : item.kind === 'sub' ? (
+      <Ionicons name="swap-horizontal" size={15} color={theme.colors.win} />
     ) : (
       <View
         style={[
@@ -78,9 +90,16 @@ function Event({ item, align }: { item: TimelineItem; align: 'left' | 'right' })
   return (
     <View style={[styles.event, align === 'right' && styles.eventRight]}>
       {align === 'left' ? icon : null}
-      <Text numberOfLines={1} style={[styles.eventText, { color: theme.colors.text, textAlign: align }]}>
-        {item.text}
-      </Text>
+      <View style={align === 'right' ? styles.subTextRight : undefined}>
+        <Text numberOfLines={1} style={[styles.eventText, { color: theme.colors.text, textAlign: align }]}>
+          {item.text}
+        </Text>
+        {item.kind === 'sub' && item.subOff ? (
+          <Text numberOfLines={1} style={[styles.subOff, { color: theme.colors.textMuted, textAlign: align }]}>
+            ↓ {item.subOff}
+          </Text>
+        ) : null}
+      </View>
       {align === 'right' ? icon : null}
     </View>
   );
@@ -111,5 +130,7 @@ const styles = StyleSheet.create({
   event: { flexDirection: 'row', alignItems: 'center', gap: 8, maxWidth: '100%' },
   eventRight: { justifyContent: 'flex-end' },
   eventText: { fontSize: 14, fontFamily: fonts.bodyMedium, flexShrink: 1 },
+  subTextRight: { alignItems: 'flex-start' },
+  subOff: { fontSize: 11, fontFamily: fonts.mono, marginTop: 1 },
   card: { width: 11, height: 15, borderRadius: 2 },
 });

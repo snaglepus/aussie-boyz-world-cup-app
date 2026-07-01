@@ -25,3 +25,23 @@ export function useMatchStats(match?: Match) {
     retry: 1,
   });
 }
+
+/**
+ * Full in-play detail (team stats, subs, lineups, commentary) from ESPN for a LIVE
+ * match — powers the richer Live-tab card. Polls every 30s while the game is on.
+ */
+export function useLiveDetail(match?: Match) {
+  const enabled = !!match && match.status === 'live' && !match.home.isPlaceholder && !match.away.isPlaceholder;
+  const ymd = (match?.date ?? '').replace(/-/g, '');
+
+  return useQuery<EspnMatchDetail | null>({
+    queryKey: ['live-detail', match?.id],
+    queryFn: () => fetchEspnMatchStats(ymd, match!.home.code, match!.away.code),
+    enabled,
+    staleTime: 20_000,
+    gcTime: 5 * 60_000,
+    refetchInterval: enabled ? 30_000 : false,
+    refetchOnWindowFocus: true,
+    retry: 1,
+  });
+}
