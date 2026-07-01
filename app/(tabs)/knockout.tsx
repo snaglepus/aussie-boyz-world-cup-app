@@ -156,6 +156,7 @@ function MatchCard({ match }: { match: BracketMatch }) {
   const theme = useTheme();
   const router = useRouter();
   const finished = match.status === 'finished';
+  const live = match.status === 'live';
 
   return (
     <Pressable
@@ -163,8 +164,10 @@ function MatchCard({ match }: { match: BracketMatch }) {
       style={({ pressed }) => [
         styles.card,
         {
-          backgroundColor: theme.colors.surface,
-          borderColor: theme.colors.hairline,
+          // Live ties stand out: a lighter surface + a thin lime border.
+          backgroundColor: live ? theme.colors.surfaceAlt : theme.colors.surface,
+          borderColor: live ? theme.colors.accent : theme.colors.hairline,
+          borderWidth: live ? 1 : StyleSheet.hairlineWidth,
           opacity: pressed ? 0.7 : 1,
         },
       ]}
