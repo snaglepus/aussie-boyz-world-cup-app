@@ -7,12 +7,15 @@ import { Card } from '../../src/components/Card';
 import { EmptyState } from '../../src/components/EmptyState';
 import { EventsTimeline } from '../../src/components/EventsTimeline';
 import { GoalScorers } from '../../src/components/GoalScorers';
+import { Lineups } from '../../src/components/Lineups';
 import { OddsBar } from '../../src/components/OddsBar';
 import { ScoreHero } from '../../src/components/ScoreHero';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { StatBars } from '../../src/components/StatBars';
+import { CommentaryItem } from '../../src/data/espnStats';
 import { liveMatches } from '../../src/data/service';
 import { Match } from '../../src/data/types';
+import { useLiveDetail } from '../../src/hooks/useMatchStats';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { fonts } from '../../src/theme/theme';
@@ -96,34 +99,57 @@ export default function LiveScreen() {
 function LiveCard({ match }: { match: Match }) {
   const router = useRouter();
   const theme = useTheme();
-  const hasStats = match.stats.length > 0;
-  const hasEvents = match.cards.length > 0;
+  const { data: detail } = useLiveDetail(match);
+
   const hasOdds = !!match.odds;
+  const subs = detail?.subs ?? [];
+  const stats = detail?.stats ?? match.stats;
+  const lineups = detail?.lineups;
+  const hasEvents = match.goals.length > 0 || match.cards.length > 0 || subs.length > 0;
+  // Latest commentary first — the last few lines are what matters mid-match.
+  const commentary: CommentaryItem[] = (detail?.commentary ?? []).slice(-8).reverse();
+
+  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <View style={[styles.section, { borderTopColor: theme.colors.hairline }]}>
+      <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]}>{title}</Text>
+      {children}
+    </View>
+  );
 
   return (
     <Pressable onPress={() => router.push(`/match/${encodeURIComponent(match.id)}`)}>
-      <Card style={{ paddingBottom: hasStats || hasEvents ? 16 : 4 }}>
+      <Card style={{ paddingBottom: 16 }}>
         <ScoreHero match={match} />
         <GoalScorers goals={match.goals} />
         {hasOdds ? (
-          <View style={[styles.section, { borderTopColor: theme.colors.hairline }]}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]}>
-              {match.odds!.live ? 'LIVE WIN PROBABILITY' : 'WIN PROBABILITY'}
-            </Text>
+          <Section title={match.odds!.live ? 'LIVE WIN PROBABILITY' : 'WIN PROBABILITY'}>
             <OddsBar odds={match.odds!} home={match.home} away={match.away} />
-          </View>
+          </Section>
         ) : null}
         {hasEvents ? (
-          <View style={[styles.section, { borderTopColor: theme.colors.hairline }]}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]}>EVENTS</Text>
-            <EventsTimeline match={match} />
-          </View>
+          <Section title="EVENTS">
+            <EventsTimeline match={match} subs={subs} />
+          </Section>
         ) : null}
-        {hasStats ? (
-          <View style={[styles.section, { borderTopColor: theme.colors.hairline }]}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]}>STATS</Text>
-            <StatBars stats={match.stats} />
-          </View>
+        {stats.length ? (
+          <Section title="STATS">
+            <StatBars stats={stats} />
+          </Section>
+        ) : null}
+        {lineups ? (
+          <Section title="LINEUPS">
+            <Lineups home={lineups.home} away={lineups.away} homeTeam={match.home} awayTeam={match.away} />
+          </Section>
+        ) : null}
+        {commentary.length ? (
+          <Section title="COMMENTARY">
+            {commentary.map((c, i) => (
+              <View key={i} style={styles.commentRow}>
+                <Text style={[styles.commentMin, { color: theme.colors.accent }]}>{c.minute ? `${c.minute}'` : '·'}</Text>
+                <Text style={[styles.commentText, { color: theme.colors.textSecondary }]}>{c.text}</Text>
+              </View>
+            ))}
+          </Section>
         ) : null}
         <Text style={[styles.tapHint, { color: theme.colors.textMuted }]}>Tap for full match detail</Text>
       </Card>
@@ -142,4 +168,7 @@ const styles = StyleSheet.create({
   refreshRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 16 },
   refreshText: { fontSize: 12, fontFamily: fonts.mono, letterSpacing: 0.3 },
   tapHint: { fontSize: 12, fontFamily: fonts.mono, textAlign: 'center', marginTop: 14 },
+  commentRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingVertical: 5 },
+  commentMin: { fontSize: 11, fontFamily: fonts.monoBold, minWidth: 30, textAlign: 'right' },
+  commentText: { fontSize: 12, fontFamily: fonts.body, flex: 1, lineHeight: 17 },
 });
