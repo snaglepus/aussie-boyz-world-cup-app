@@ -47,7 +47,7 @@ export default function KnockoutScreen() {
             </Text>
             <View style={styles.legendRow}>
               <Ionicons name="checkmark-circle" size={13} color={theme.colors.accent} />
-              <Text style={[styles.legendText, { color: theme.colors.text }]}>Winner</Text>
+              <Text style={[styles.legendText, { color: theme.colors.text }]}>Confirmed</Text>
               <Text style={[styles.legendText, { color: theme.colors.accent }]}>· Favourite</Text>
               <Text style={[styles.legendText, { color: theme.colors.textSecondary }]}>· others projected</Text>
             </View>
@@ -247,7 +247,8 @@ function SideRow({
       <Text numberOfLines={1} style={[styles.sideName, { color, fontFamily: highlight ? fonts.bodyBold : fonts.bodyMedium }]}>
         {side.label}
       </Text>
-      {emphasis === 'win' ? (
+      {known && side.confirmed ? (
+        // Tick = this team is confirmed into the slot (a real, decided occupant).
         <Ionicons name="checkmark-circle" size={13} color={theme.colors.accent} style={styles.tick} />
       ) : null}
       {score != null ? (
