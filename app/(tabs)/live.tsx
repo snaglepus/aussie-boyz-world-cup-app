@@ -10,12 +10,15 @@ import { Collapsible } from '../../src/components/Collapsible';
 import { CommentaryFeed } from '../../src/components/CommentaryFeed';
 import { GoalScorers } from '../../src/components/GoalScorers';
 import { Lineups } from '../../src/components/Lineups';
+import { MatchInfo } from '../../src/components/MatchInfo';
 import { OddsBar } from '../../src/components/OddsBar';
 import { ScoreHero } from '../../src/components/ScoreHero';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { StatBars } from '../../src/components/StatBars';
+import { VenueMiniMap } from '../../src/components/VenueMiniMap';
 import { liveMatches } from '../../src/data/service';
 import { Match } from '../../src/data/types';
+import { resolveVenue } from '../../src/data/venues';
 import { useMatchStats } from '../../src/hooks/useMatchStats';
 import { useWorldCup } from '../../src/hooks/useWorldCup';
 import { useTheme } from '../../src/theme/ThemeProvider';
@@ -98,7 +101,6 @@ export default function LiveScreen() {
 }
 
 function LiveCard({ match }: { match: Match }) {
-  const router = useRouter();
   const theme = useTheme();
   const { data: detail } = useMatchStats(match);
 
@@ -108,6 +110,7 @@ function LiveCard({ match }: { match: Match }) {
   const lineups = detail?.lineups;
   const commentary = detail?.commentary ?? [];
   const hasEvents = match.goals.length > 0 || match.cards.length > 0 || subs.length > 0;
+  const venue = resolveVenue(match.ground);
 
   const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
     <View style={[styles.section, { borderTopColor: theme.colors.hairline }]}>
@@ -117,42 +120,47 @@ function LiveCard({ match }: { match: Match }) {
   );
 
   return (
-    <Pressable onPress={() => router.push(`/match/${encodeURIComponent(match.id)}`)}>
-      <Card style={{ paddingBottom: 16 }}>
-        <ScoreHero match={match} />
-        <GoalScorers goals={match.goals} />
-        {hasOdds ? (
-          <Section title={match.odds!.live ? 'LIVE WIN PROBABILITY' : 'WIN PROBABILITY'}>
-            <OddsBar odds={match.odds!} home={match.home} away={match.away} />
-          </Section>
-        ) : null}
-        {hasEvents ? (
-          <Section title="EVENTS">
-            <EventsTimeline match={match} subs={subs} />
-          </Section>
-        ) : null}
-        {stats.length ? (
-          <Section title="STATS">
-            <StatBars stats={stats} />
-          </Section>
-        ) : null}
-        {lineups ? (
-          <View style={[styles.section, { borderTopColor: theme.colors.hairline }]}>
-            <Collapsible title="Lineups">
-              <Lineups home={lineups.home} away={lineups.away} homeTeam={match.home} awayTeam={match.away} />
-            </Collapsible>
-          </View>
-        ) : null}
-        {commentary.length ? (
-          <View style={[styles.section, { borderTopColor: theme.colors.hairline }]}>
-            <Collapsible title="Commentary">
-              <CommentaryFeed items={commentary} limit={10} />
-            </Collapsible>
-          </View>
-        ) : null}
-        <Text style={[styles.tapHint, { color: theme.colors.textMuted }]}>Tap for full match detail</Text>
-      </Card>
-    </Pressable>
+    <Card style={{ paddingBottom: 16 }}>
+      <ScoreHero match={match} />
+      <GoalScorers goals={match.goals} />
+      {hasOdds ? (
+        <Section title={match.odds!.live ? 'LIVE WIN PROBABILITY' : 'WIN PROBABILITY'}>
+          <OddsBar odds={match.odds!} home={match.home} away={match.away} />
+        </Section>
+      ) : null}
+      {hasEvents ? (
+        <Section title="EVENTS">
+          <EventsTimeline match={match} subs={subs} />
+        </Section>
+      ) : null}
+      {stats.length ? (
+        <Section title="STATS">
+          <StatBars stats={stats} />
+        </Section>
+      ) : null}
+      {lineups ? (
+        <View style={[styles.section, { borderTopColor: theme.colors.hairline }]}>
+          <Collapsible title="Lineups">
+            <Lineups home={lineups.home} away={lineups.away} homeTeam={match.home} awayTeam={match.away} />
+          </Collapsible>
+        </View>
+      ) : null}
+      {commentary.length ? (
+        <View style={[styles.section, { borderTopColor: theme.colors.hairline }]}>
+          <Collapsible title="Commentary">
+            <CommentaryFeed items={commentary} limit={10} />
+          </Collapsible>
+        </View>
+      ) : null}
+      <Section title="MATCH INFO">
+        <MatchInfo match={match} venue={venue} />
+      </Section>
+      {venue ? (
+        <Section title="LOCATION">
+          <VenueMiniMap match={match} venue={venue} />
+        </Section>
+      ) : null}
+    </Card>
   );
 }
 
@@ -166,5 +174,4 @@ const styles = StyleSheet.create({
   loadingText: { fontSize: 14, fontFamily: fonts.body },
   refreshRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 16 },
   refreshText: { fontSize: 12, fontFamily: fonts.mono, letterSpacing: 0.3 },
-  tapHint: { fontSize: 12, fontFamily: fonts.mono, textAlign: 'center', marginTop: 14 },
 });
