@@ -42,6 +42,21 @@ const R32_FINAL: Record<number, [string, string]> = {
   88: ['Australia', 'Egypt'],
 };
 
+/**
+ * Fixed feeder tree (match number → the two earlier matches that feed it). The
+ * openfootball feed carries this as "W##" slot codes, but once a match is played
+ * it *overwrites* those codes with the real team name — which would otherwise lose
+ * the linkage and wreck the bracket's row/connector layout. This structural map
+ * doesn't change, so we key the layout off it instead of the mutable slot codes.
+ */
+const KO_FEEDERS: Record<number, [number, number]> = {
+  89: [74, 77], 90: [73, 75], 91: [76, 78], 92: [79, 80],
+  93: [83, 84], 94: [81, 82], 95: [86, 88], 96: [85, 87],
+  97: [89, 90], 98: [93, 94], 99: [91, 92], 100: [95, 96],
+  101: [97, 98], 102: [99, 100],
+  104: [101, 102],
+};
+
 const ROUND_ORDER = ['Round of 32', 'Round of 16', 'Quarter-final', 'Semi-final', 'Final'] as const;
 export type KnockoutRound = (typeof ROUND_ORDER)[number];
 
@@ -128,11 +143,16 @@ export function buildBracket(data: WorldCupData, odds?: TitleOdd[] | null): Brac
     if (!Number.isNaN(n)) byNum.set(n, m);
   }
 
-  // Vertical layout rows from the actual feeder tree: walk down from the Final
-  // following each match's W## feeders to order the R32 leaves, then place every
+  // Vertical layout rows from the fixed feeder tree: walk down from the Final
+  // following each match's feeders to order the R32 leaves, then place every
   // parent at the midpoint of its two children. This makes each card line up
-  // between the two matches it really draws from (not by match number).
+  // between the two matches it really draws from (not by match number). We key off
+  // the structural KO_FEEDERS map (not the "W##" slot codes) because openfootball
+  // overwrites those codes with team names once a match is played.
   const feedersOf = (m: Match): Match[] => {
+    const mapped = KO_FEEDERS[numOf(m)];
+    if (mapped) return mapped.map((n) => byNum.get(n)).filter((x): x is Match => !!x);
+    // Fallback for anything outside the map: parse the raw W## slot codes.
     const fs: Match[] = [];
     for (const slot of [m.homeSlot, m.awaySlot]) {
       const w = (slot ?? '').match(/^W(\d+)$/);
